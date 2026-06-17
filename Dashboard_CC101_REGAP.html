@@ -777,10 +777,11 @@ function wireCQ(){
 function renderImport(){
   const f=DB.fontes||{};
   const card=(ic,nm,src,info)=>`<div class="file-row"><span style="font-size:20px">${ic}</span><div><b>${nm}</b><br><span style="color:var(--muted)">${src?esc(src):'<i>não importado</i>'}</span></div><span class="st" style="color:${src?'var(--ok)':'var(--muted)'}">${info}</span></div>`;
-  let html=`<div class="grid cols-2"><div class="panel"><h3>⬆️ Importar planilhas</h3><div class="ph-sub">Arraste os arquivos .xlsx ou clique para selecionar. O painel reconhece cada arquivo pelas abas.</div>
+  let html=`<div class="grid cols-2"><div class="panel"><h3>🔄 Dados automáticos</h3><div class="ph-sub">O painel carrega sozinho as planilhas da pasta <b>dados/</b> do repositório — quem abrir já vê os dados, sem importar.</div>
+    <div class="note" style="margin-bottom:12px">Para atualizar o mês: substitua os 3 arquivos <b>.xlsx</b> na pasta <code>dados/</code> da sua área de trabalho (PlanejamentoC3) e dê <b>Push</b> no GitHub Desktop. Em ~1 min o painel reflete os novos dados.</div>
+    <h3 style="margin-top:6px">⬆️ Importar manualmente</h3><div class="ph-sub">Opcional — para prévia/teste local antes de publicar.</div>
     <div class="drop" id="drop"><div class="di">📥</div><div style="margin-top:8px;font-weight:600;color:var(--ink)">Solte os arquivos aqui</div><div style="font-size:12px">ou <a href="#" id="pick" style="color:var(--navy);font-weight:600">clique para escolher</a></div>
-    <div style="margin-top:10px;font-size:11px">Aceita: Painel Gestão SAMC · Crono Financeiro · Projeção Metas</div></div>
-    <div class="note">100% offline — os arquivos são lidos no seu navegador e nada é enviado a servidores. Os dados ficam salvos localmente.</div>
+    <div style="margin-top:10px;font-size:11px">Reconhece cada arquivo pelas abas: Painel Gestão · Crono Financeiro · Projeção Metas</div></div>
     </div>
     <div class="panel"><h3>Fontes carregadas</h3><div class="ph-sub">Status de cada planilha</div>
     ${card('📋',"Carteira de SS's",f.painel,DB.carteira.length?DB.carteira.length+' SS':'—')}
@@ -813,6 +814,41 @@ function exportJSON(){
   toast('JSON exportado.','ok');
 }
 
+/* ---- carregamento automático a partir da pasta dados/ do repositório ---- */
+const REPO_DEFAULT={owner:'C3planejamento',name:'PlanejamentoC3'};
+const DADOS_DIR='dados';
+const NOMES_FIXOS=['painel.xlsx','crono.xlsx','metas.xlsx'];
+function repoInfo(){
+  if(/github\.io$/i.test(location.hostname)){
+    const owner=location.hostname.split('.')[0];
+    const repo=location.pathname.split('/').filter(Boolean)[0]||REPO_DEFAULT.name;
+    return {owner,name:repo};
+  }
+  return REPO_DEFAULT;
+}
+async function listarArquivos(){
+  const {owner,name}=repoInfo();
+  try{
+    const r=await fetch(`https://api.github.com/repos/${owner}/${name}/contents/${DADOS_DIR}`,{headers:{'Accept':'application/vnd.github+json'}});
+    if(r.ok){const list=await r.json();if(Array.isArray(list)){const xs=list.filter(f=>/\.xlsx?$/i.test(f.name)).map(f=>({name:f.name,url:f.download_url}));if(xs.length)return xs;}}
+  }catch(e){/* rate limit / offline -> fallback */}
+  // fallback: nomes fixos relativos ao site
+  return NOMES_FIXOS.map(n=>({name:n,url:`${DADOS_DIR}/${n}`}));
+}
+async function autoLoad(){
+  const files=await listarArquivos();
+  const bak=DB; DB={carteira:[],metas:null,crono:null,cq:null,fontes:{},atualizado:null};
+  let ok=0;
+  for(const f of files){
+    try{const resp=await fetch(f.url);if(!resp.ok)continue;const buf=await resp.arrayBuffer();
+      const wb=XLSX.read(new Uint8Array(buf),{type:'array'});ingestWorkbook(wb,f.name);ok++;
+    }catch(e){console.warn('autoLoad: falha em',f.name,e);}
+  }
+  if(ok&&(DB.carteira.length||DB.metas||DB.crono||DB.cq)){DB.atualizado=Date.now();DB.auto=true;save();return true;}
+  DB=bak; return false;
+}
+function showLoading(){$('#main').innerHTML=`<div class="panel"><div class="empty"><div class="big">⏳</div><div style="font-size:17px;color:var(--ink);font-weight:600;margin-bottom:4px">Carregando dados do repositório…</div><div>Lendo as planilhas da pasta <b>dados/</b></div></div></div>`;}
+
 function boot(){
   buildNav();buildFilters();
   $('#btnImport').onclick=()=>{ if(VIEW!=='import')go('import'); $('#fileInput').click(); };
@@ -825,8 +861,15 @@ function boot(){
   // arrastar para qualquer lugar abre import
   window.addEventListener('dragover',e=>{e.preventDefault();});
   window.addEventListener('drop',e=>{e.preventDefault();if(VIEW!=='import'&&e.dataTransfer&&e.dataTransfer.files.length){go('import');handleFiles(e.dataTransfer.files);}});
-  VIEW=(DB.carteira.length||DB.metas||DB.crono||DB.cq)?'visao':'import';
-  buildNav();render();
+  const hadCache=DB.carteira.length||DB.metas||DB.crono||DB.cq;
+  VIEW='visao';buildNav();
+  if(hadCache)render(); else showLoading();
+  // sempre tenta atualizar a partir do repositório
+  autoLoad().then(ok=>{
+    if(ok){buildFilters();VIEW='visao';buildNav();render();}
+    else if(!hadCache){VIEW='import';buildNav();render();}
+    else render();
+  });
 }
 
 /* hook p/ verificação automatizada (carrega via fetch de URLs same-origin) */
