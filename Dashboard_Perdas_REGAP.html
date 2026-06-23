@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Perdas CC101 · REGAP · C3</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Oswald:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --civ:#1565C0; --civ-lt:#90CAF9;
+  --ele:#E65100; --ele-lt:#FFCC80;
+  --mec:#2E7D32; --mec-lt:#A5D6A7;
+  --tot:#37474F;
+  --sb:#0D1B3E; --sb-hover:#1A2E5A; --sb-active:#1565C0;
+  --sb-txt:#B0BEC5; --sb-txt-hi:#fff;
+  --bg:#EEF2F7; --card:#fff; --border:#DDE3EC;
+  --text:#1C2333; --sub:#6B7A99;
+  --sb-w:248px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;font-size:14px}
+
+/* ── TOP HEADER ──────────────────────── */
+.topbar{
+  background:linear-gradient(110deg,#071228 0%,#1565C0 100%);
+  color:#fff;height:54px;min-height:54px;
+  display:flex;align-items:center;padding:0 18px;gap:14px;
+  box-shadow:0 2px 10px rgba(0,0,0,.4);z-index:100;
+}
+.topbar img{height:38px}
+.topbar h1{font-family:'Oswald',sans-serif;font-size:17px;font-weight:600;letter-spacing:.7px;flex:1}
+.topbar small{font-size:11px;opacity:.6}
+
+/* ── BODY LAYOUT ──────────────────────── */
+.layout{display:flex;flex:1;overflow:hidden}
+
+/* ── SIDEBAR ──────────────────────────── */
+.sidebar{
+  width:var(--sb-w);min-width:var(--sb-w);
+  background:var(--sb);
+  display:flex;flex-direction:column;
+  overflow-y:auto;overflow-x:hidden;
+  scrollbar-width:thin;scrollbar-color:#1A2E5A transparent;
+}
+.sidebar::-webkit-scrollbar{width:4px}
+.sidebar::-webkit-scrollbar-thumb{background:#1A2E5A;border-radius:4px}
+
+.sb-section{padding:10px 0 4px;border-bottom:1px solid #162040}
+.sb-section-lbl{font-size:9.5px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;
+  color:#3D5A80;padding:0 16px 6px}
+
+.sb-item{
+  display:flex;align-items:center;gap:9px;
+  padding:8px 16px;cursor:pointer;
+  color:var(--sb-txt);font-size:12.5px;font-weight:500;
+  transition:background .15s,color .15s;border-left:3px solid transparent;
+  user-select:none;
+}
+.sb-item:hover{background:var(--sb-hover);color:var(--sb-txt-hi)}
+.sb-item.active{background:rgba(21,101,192,.35);color:#fff;border-left-color:var(--sb-active)}
+.sb-item .ico{font-size:14px;opacity:.7;flex-shrink:0}
+.sb-item .lbl{flex:1;line-height:1.3}
+.sb-item .arrow{font-size:10px;opacity:.5;transition:transform .2s;flex-shrink:0}
+.sb-item.open .arrow{transform:rotate(90deg)}
+.sb-item .badge-cnt{font-size:10px;background:#162040;border-radius:10px;padding:1px 6px;color:#5C7A99}
+
+/* Disc color line */
+.sb-item.d-civ{border-left-color:transparent}
+.sb-item.d-civ.active,.sb-item.d-civ:hover{border-left-color:var(--civ)}
+.sb-item.d-ele.active,.sb-item.d-ele:hover{border-left-color:var(--ele)}
+.sb-item.d-mec.active,.sb-item.d-mec:hover{border-left-color:var(--mec)}
+
+/* Sub-items (level 2) */
+.sb-sub{display:none;background:#081426}
+.sb-sub.open{display:block}
+.sb-sub-item{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 16px 6px 32px;cursor:pointer;
+  color:#7A9ABD;font-size:11.5px;font-weight:400;
+  transition:background .12s,color .12s;
+  border-left:3px solid transparent;
+}
+.sb-sub-item:hover{background:#0F2040;color:#B8D4F0}
+.sb-sub-item.active{color:#fff;background:#0F2040}
+.sb-sub-item.act-civ{border-left-color:var(--civ)}
+.sb-sub-item.act-ele{border-left-color:var(--ele)}
+.sb-sub-item.act-mec{border-left-color:var(--mec)}
+.sb-sub-item .h-tag{margin-left:auto;font-size:10px;background:#162040;padding:1px 5px;border-radius:8px;color:#5C8AAA;flex-shrink:0}
+
+/* ── CONTENT AREA ─────────────────────── */
+.content{flex:1;overflow-y:auto;overflow-x:hidden;padding:22px 26px}
+
+/* Screens */
+.screen{display:none}
+.screen.active{display:block}
+
+/* ── CARDS / KPI ──────────────────────── */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.kpi{background:var(--card);border-radius:9px;padding:16px 20px;
+     box-shadow:0 1px 8px rgba(0,0,0,.07);border-top:4px solid}
+.kpi.tot{border-color:var(--tot)}.kpi.civ{border-color:var(--civ)}
+.kpi.ele{border-color:var(--ele)}.kpi.mec{border-color:var(--mec)}
+.kpi-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:var(--sub)}
+.kpi-val{font-family:'Oswald',sans-serif;font-size:34px;font-weight:600;margin:5px 0 2px;line-height:1}
+.kpi-val span{font-size:16px;font-weight:400}
+.kpi.tot .kpi-val{color:var(--tot)}.kpi.civ .kpi-val{color:var(--civ)}
+.kpi.ele .kpi-val{color:var(--ele)}.kpi.mec .kpi-val{color:var(--mec)}
+.kpi-sub{font-size:11px;color:var(--sub)}
+
+/* ── PAGE HEADER ──────────────────────── */
+.pg-hdr{display:flex;align-items:center;gap:12px;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.pg-hdr h2{font-family:'Oswald',sans-serif;font-size:19px;font-weight:500;flex:1}
+.badge{display:inline-block;padding:3px 12px;border-radius:20px;font-size:10.5px;font-weight:700;letter-spacing:.5px;color:#fff;text-transform:uppercase}
+.b-civ{background:var(--civ)}.b-ele{background:var(--ele)}.b-mec{background:var(--mec)}.b-tot{background:var(--tot)}
+
+/* ── CHART CARD ───────────────────────── */
+.card{background:var(--card);border-radius:9px;padding:20px 22px;box-shadow:0 1px 8px rgba(0,0,0,.07);margin-bottom:18px}
+.card-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--sub);margin-bottom:14px}
+.chart-wrap{position:relative}
+
+/* ── TWO-COL GRID ─────────────────────── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+
+/* ── SCOPE DETAIL ─────────────────────── */
+.scope-hero{background:var(--card);border-radius:9px;padding:28px 28px 22px;box-shadow:0 1px 8px rgba(0,0,0,.07);margin-bottom:18px}
+.scope-name{font-family:'Oswald',sans-serif;font-size:22px;font-weight:600;margin:10px 0 6px;line-height:1.3}
+.scope-meta{display:flex;gap:24px;margin:16px 0;flex-wrap:wrap}
+.scope-meta-item{display:flex;flex-direction:column;gap:2px}
+.smi-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--sub);font-weight:700}
+.smi-val{font-family:'Oswald',sans-serif;font-size:28px;font-weight:600}
+.prog-wrap{margin-top:18px}
+.prog-lbl{font-size:11px;color:var(--sub);margin-bottom:6px}
+.prog-bg{background:#EEF2F7;border-radius:6px;height:14px;width:100%}
+.prog-fill{height:14px;border-radius:6px;transition:width .4s}
+
+/* ── RANK TABLE (inside scope) ────────── */
+.rank-table{width:100%;border-collapse:collapse;font-size:12.5px}
+.rank-table th{background:#F4F7FB;padding:7px 10px;text-align:left;
+  font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--sub);
+  border-bottom:1px solid var(--border)}
+.rank-table td{padding:7px 10px;border-bottom:1px solid var(--border)}
+.rank-table tr:last-child td{border:none}
+.rank-table tr.highlight td{background:#F0F6FF;font-weight:600}
+.bar-bg{background:#EEF2F7;border-radius:4px;height:7px;min-width:80px}
+.bar-fill{height:7px;border-radius:4px}
+
+/* ── PAINEL: DONUT ─────────────────────── */
+.donut-wrap{display:flex;align-items:center;gap:28px}
+.donut-wrap canvas{max-width:200px;max-height:200px}
+.donut-legend{display:flex;flex-direction:column;gap:12px;flex:1}
+.dl-item{display:flex;align-items:center;gap:10px}
+.dl-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.dl-name{flex:1;font-size:13px}
+.dl-val{font-family:'Oswald',sans-serif;font-size:16px;font-weight:600}
+.dl-pct{font-size:11px;color:var(--sub)}
+
+/* ── TOP RANKING ──────────────────────── */
+.top-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.top-card{background:var(--card);border-radius:9px;padding:16px 18px;box-shadow:0 1px 8px rgba(0,0,0,.07)}
+.top-card-hdr{display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.top-card-hdr span{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--sub)}
+.top-item{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f0f2f5;font-size:12px}
+.top-item:last-child{border:none}
+.top-rank{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:9.5px;font-weight:700;color:#fff;flex-shrink:0}
+.top-lbl{flex:1;line-height:1.3;color:var(--text)}
+.top-h{font-family:'Oswald',sans-serif;font-size:14px;font-weight:600;flex-shrink:0}
+
+/* Back button */
+.btn-back{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:6px;
+  background:#F0F4FB;border:1px solid var(--border);cursor:pointer;font-size:12px;color:var(--sub);
+  margin-bottom:14px;transition:background .15s}
+.btn-back:hover{background:#E0E8F5;color:var(--text)}
+</style>
+</head>
+<body>
+
+<!-- TOP HEADER -->
+<div class="topbar">
+  <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAaQAAACMCAYAAAAzxN3aAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAABuoSURBVHhe7d0H2CxnWcZxmhBCEaQYAakC0kLvIEhvigKhd0SQHpqEIp3QCb1JCR2kSk2QqtIJ0jsEQXoz9JZ4/8N5dHh99p3Z8+23887MfV/X7zrJO7vfmd093zw7M285zjHHHGNmZja6tNHMzGzb0kYzM7NtSxvNzMy2LW00MzPbtrTRzMxs29JGMzOzbUsbzczMti1tNDMz27a0cWZOIZeU28mj5UnyfHmhvFRevue/nyOHyCPklrK/nFSyn2nj2U+uKPeUx8uz5FB5sbxCXikvkWfLY+WBcl05q2Q/z8wakTbOAAXoCfJJ2WneJxQyfmb2d9nu+n25sVBwviY7yQ/kzXJHOYtkf5+ZjSRtnKCTy83ltfJT2a18W/j2fYDsI9m+2M6dU+4h75fdzOeFs6hLSLYfZrZFaeNEcEntvvIhGSO/lHfKXYUDaLaPNtxV5enyORkj35NXyY3k1JLto5ntorSxUSeSqwn3C74oreXLwgH16pLtv/2uM8qt5DD5tbSWj8hD5DyS7b+ZbVja2BCu8x8oXPf/lUwlXDZ8k9xGTifZa1uii8vD5QiZUrh3xReha8gJJHttZrZDaePILi10SOCMYy75tDxULiLZa54rejheT+j99n2ZQ34ih8td5EySvW4z2wtp45adRm4iXL+fy0Grlm8JPcboiryvZO/JlJ1D7i30TlxCPiv0wrysZO+HmQ2UNm7BBeR+MlaHhFZytHxA7iZTHifDfTPG/dBrbcmhWzk9PfmC5TFsZmtKG3cBHRKuJQxA/aY4eT4jTxYGfmbvYyu4L8b9sTfKlO7tbTt82ThI3DHCbIC0cUPOLHeWd0iLvahaD/cq3iIc+E8r2Xu8TReVg2UTg42XmK8IHSPoKZq9v2aLlzbuAB0SHiV803c2GwoBHSMuLNl7v2kMNr6hcL/rO+JsNq+ROwjd37P332xx0sY1XV/eIEeJs518Q+gEcm3JPpO9dTKhQ8J7xZfithc6RjBjxMUk+1zMFiFtHIhvz4xud8YNxWkT95weKc74+Rc5sWSfkdmspY0DPEyctsIURtlnNcTUBqrOPT+Ts0v2WZnNVtrY49bitJkrSPaZ1TCjhNNefiz0Ts0+M7NZSht7/EacNkOX+uwzW4XxQ067YcaS7HMzm6W0scJnR+3nSpJ9dpm3itNumBMx+9zMZiltrGBgq9N2nijZZ5dxz8j2w/iv7LMzm520seJt4rQdxg1ln12JlVid9vOXkn1+ZrOTNlbQJdVpO5zFZp9dibnWnPaz6bFmZs1KGytckNqPC9K84jMkW4y0scIFqf24IM0rLki2GGljhQtS+xlakJgmyGk/Lki2GGljhQtS+3FBmldckGwx0sYKF6T244I0r7gg2WKkjRUuSO3HBWlecUGyxUgbK1yQ2o8L0rzigmSLkTZWuCC1HxekecUFyRYjbaxwQWo/LkjziguSLUbaWOGC1H5ckOYVFyRbjLSxwgWp/bggzSsuSLYYaWOFC1L7cUGaV1yQbDHSxgoXpPbjgjSvuCDZYqSNFS5I7ccFaV5xQbLFSBsr5lKQviz/Kq+W18i/y3/JHLK0gvRz+ZSw+i2f5Rvkg/JDmUNckGwx0saKqRakr8s/yl8JC9Nlrw2nluvLS+S7MsUsoSB9WB4tl5bstYWzy4HydplqXJBsMdLGiikVpI/Kg+R8kr2WIS4mB8tnZCqZY0HiLOhwuY38sWSvp88J5TryIvm2TCUuSLYYaWNFywXpKHmt3Fz2k2z/d+JMcns5TH4qrWYuBekL8jS5hmT7v1MXlYfIEdJyXJBsMdLGitYK0pFyiFxRsv3dTVeVZ8jXpKVMuSC9S+4jXGrL9nm3nEpuKW+U1u49uSDZYqSNFS0UJA5ad5PTS7aPYziX3FfeI2NnSgXp+/IKuZFwSS3bzzFcQZ4iX5Kx44Jki5E2VoxZkDjYt1SEVjmPjHkgm0pBeoxk+9UaiuWYcUGyxUgbK8YqSPR4y/anVaeV38gYmUJB4qwo26dW/Y2MFRckW4y0sWKsgjT0INuSsboaT6EgXVmyfWrVCWSsuCDZYqSNFWMVpKdKtj8te5OMkUMl25/SmAXpkpLtU8vG6uywqYLE5e4/lD+SUwo9UU+z58/s8aVTCGf+2Tbwc/jZ2bZV9pELy5/JBfa0DcVrOYPwd9IphTGE7ENtH7t4PbXXzvt1uqItw99fexxfZtjO35dtX4XHn7Fo6xN/F3h//kB4b7LHrsJ7ynN5HzlGZI9Zhb9r3X8DvyNtrBirID1Rsv1pGT22xsgUCtJlJNunlv23jJFNFCQ63NRyV8me1/VNITeUctsrJcLA8nJ75plS5kfydKFQZc8Jt5Va7i3Z87riPu8dpNzGIPrIHaXcHm4tEZ6TPYZB+ZF9JXtMiU5SkYMke0zm3ZLlx0Jv5Ow5XQdIN7+U7HEZ7p1H6HSWPaZX2lgxVkF6smT70zKmsBkjUyhIl5Jsn1o21tizTRQkzj4+KeR7wmXd58rHaFCG/JuhRyT5tZSzncTAcX5e37f648nnJcKUT4w3617i7jtb4uAXr4f7y7weChwzeBBmWsme19UtFJwVdLd9QAhFi+LQ3dZ1DmEAPqH3b7mdnxtZ57YDs5BEeG+zx2Qo1D8T8nHhuMmA8siDJXteYKwlU6oRPudHSfa4DAUv8jnJHtMrbazwGdJwYxWk50m2PyUXpPXwbXGMbOqS3fWEvEqi7azyDrlup22Vb0iE53S3xQF8yKVYigX5qpxTuts4+NPlvtu2CvchCb9n0cZlNg7A2Vlcqft66MHb3RbHuSHjG68phOeU26IgceZXbquJs9FP7/lzncuZcbZ6U4m2W9CgMF9n97EZLvcRPtNs+yp8MfiFMK8kuaBkj6tKGytckIbjm98Yealk+1PiPsJY4Z5Btk8tY/qiMbKpgnQDIRywsu19OKgSvjmTO0ls+wQNSt/nyjfwyP6SPWaoawvpFqR1xID2uBTLgOzYFpe+riXd52RiP/h9L7dx6ZFwyazctgrzMxLOWpl1hjxessdm4lYBZ0vRxv0gwpRZ3cdmzi2ECYqz7Rm+RBDOuqP4DblE+P+kjRVjFaQnSbY/LTub8C2O+yWXFX5ZdxN/z5/LOmO12C+eF/sY+7mp/b3cnj+7P+/yku3LbuCA8gJhSqm98TrhjGLMyVk3VZBiPBXF42rCN/sbC50BsseXuNR3tNxFInEzP74V8++vfF4Xfx9Z99t3hveFcPmPz5n/5yyQjhrZ40uchfB6KKwRLgWy7Z3H/t9vZ2Mpn1eK/eB95UyGTho4v9xKCJfRsudmuLRHuBfHYHHyA8kem/lnId0zpIfSoLxfuo/NcBmSfEiy7ZmXCWHy6tjnvRqqkzZWuCDZVPANcw7ZVEHiAJVl6E3zbwnhgM+9BRKXuv7j2P/rL0hx8F91Fn8zYQkR7n3QYyx7TODgl+Vhkj2+FPeQ6InGjPAk7tdEQaJwl88rrdqPbn4i2XNLvycUye4lPubOJFeR7mNXiVsFFFwKf5y9EuZvzJ7TFQWJOR6z7aXjCukW3fgCxxfQ7mN7pY0VLkg2BfFNfA7ZVEG6iRDOZrgUxCUdzna4j5Q9vsS3dBIdAP7z2P875pg7SxwE+85+4xIUB/xsO/c/I1eS7DEhzkzYj78VLhWxL38i2eNLsf9cRuT/o5MEl+7iPsyQ9z72g0uAPPdee/6kpxmdNcjQS3bxpYGJhbkPRq+3GD7C2Xr2nNJbhDAwvzs4n886e3yJ+3qEDiLZ9lL0NKQDCL93fMaxz/8k2XNWShsrXJBsClqYU3BT2VRB4gBH9vYeUvSyi44I3LSOxNlG3xnSeSXCWJfsMZw9kb4OBX8h5PWSbe8TnRqiIHOJPRKLdXL2Uz6vFAXpzVJuO7EQ7j+W2zJ99537usODwkWi6/vDj/2/3xa58rGZ6L499AyJxU1XhYK41hyVaWOFC5JNAd1O5xLui2SvcV1x1lh+a/07GTJuJM4oumdUcbCLDOkhF12zPyInkXJ7dCjoK0hRCPg23m3nGzvjrrptGVaNJmeRaLsnDZ1cXbrPyXD/imRnfdGZYMg9oHgsYWwUlwv/WugBGfvKJc3suV3ZPaTowNHt6LAK96DJ+yTb3sX9xwj/jrgvSScP0IuSDNnn/5U2Vrgg2RRMaUHFvgztBt0nbrBTWPj2fHd5AA17kj0n3E8i5SW+GMtEhnQC6J6JcK+E320KIgNiu13r+153FCR6jt1DuA/U3c+TS/Y88Noj5SW+uH9EOAvrbstEQeLYWG6LLtRD7iFF77iyCzr4vAhnbn3jvDhjJFzCjLaYi5GxdLUu8ZzRPUcInw2X37LHhbg0l+3zPwjh3xs9esvtqbSxwgXJpuCzMpfsaCqWDlbLXRUOGtlzQjflgZ4CFem77xMoSt3BsRG+SMQxpu/shB6cq0JX7uw54VcSKS8d0mkjurYPmXWCsxjCpatyG6sbk76C1H0POZMttzMQOQa8co+q3N4Vhe120m2PAbz8bnTbu1gTrEz2OMSZFMnep+4ZHys9l9tTaWOFC5JNwVwKEqPms9e3ty4kXAq7uNDVnz85q+krevTO4v7QqoUTOaAO6ZFWuohweYob7oy/ifYh43/A82PYAq+Fn8HrO7Nkjw+8D/RaW/V6OLPh7Oj4nbZV6A3IqsblIN9AkR7Su419p7t4tg3sE+9L3z5xxsels5N22gJnnX9atJX4nHk/+fNie9pW4efxGWTbQNFa699F2ljhgmRTMJeCxFiW7PWZzVLaWOGCZFMwh4K01xNUmk1V2ljhgmRTMPWC1O0hZbYYaWOFC5JNwRQL0pFCz6Ts2r/ZIqSNFS5INgVTLEjMoM2cf9nrseV5hjCeLjoNMGh2VSeM2UgbK1yQbAqmfMmOg9CqHlu2DDGe6nHCnHQx0/zg8TxTlTZWuCDZFMyhU8PaE1PabDDBaawnxJ9MGLvuEuiTlDZWuCDZFMyhIDFrQbky604xgJGZuVlKglH/2dQ96zpYeL+ZDfyLwlIH2eNWYbwLgzkZKMsUOyxKx2zfQ5fFYPl1Zotg/Z4hCwQGfj7P4bms0Jo95uXC+5XNU5dhjBCvn2mRviO8Jxwzh0zZ08WaRE+Vr+zBeLRHSjlLxiosNcKZNs97rzBdE8tJMB0QM4BfQrLndbGUBq+b18C8f7yOvnFJO5Y2Vrgg2RTMoSCRIUtxD9Udhc/MDKxhkz1uHd3JQGOhO/JiyR5f6s7uTWIRQMJsCiwqmD2v64ESoZBlj8nEtD6E4l9uZ467yJAluVnt9ocSYZoeVlCNMMdc9rwSi5F20/0ZhGmAsud1ddesIvwMZouIPFay5wUGGUd4XnfW8KGzqe+VtLHCBcmmYC4Fiaw1W3JFzIDO/Yls+7qYVYAcJbGwXax2ytlB+fgSB8UIY67ikhTTClHQIrXZC0IcxFed6axChwHCayi3RUHibPJ4Um7v4swoDvisBRTvB+sbMTlqhOl0yud2cbYX4cwzFhtkiYxnS2TI2kgxX193Rd34UtJdHTdDBxvCulfRxkKVhJ/RfexGpY0VLkg2BXOaXHVTK+zGQm3l7A9cGhpyJlJiShjCOkLddqat6estyJpKkVVjrl4thEtO2fauOEtaZ6lvxGzV2XpFTD9EuGRVbivR+YCU70V4pnCWVbsPRPGKOfQoTNljOA4SLuNl27ti7alXSLd9yHRIsQIwE/JGG8MRmLB1U1+QUmljhQuSTcGczpCYFDV7jetizjjC/Q3uITCpaFza4QDXN/9biQNTTPjJ/Ym+5SK64kygtpR5FARSm7kbnE2Qx0i2fZUhBYkzpHJbifteZCdrV8XKsywVkW0Hs3FH0WJtqewxgQlNSbk8xxAPkQhLjLCqbva4jUsbK1yQbArmVJBYWyZ7jXuj7305n2TPW4VJOLszZ3MWNmQyTc7KSN8ZTSyU13cznY4EpO/eSIlJZUk2G3cUJLpdl9tKsWxG38SlNfcX0reAYiz30XfZjvWJIhSx+JyGrk8UZ6iE57MsRd+lyx1LGytckGwKYpGyOWRTBYlLN4SVX58lnE3E+0SHBC478Q08e24Nz+FndcNS4tljQ1x6epFk2wNnJ4QeX9n2EAXpEMm2rxIdG2r3kFhvqdxWig4d+0u2fYjsnk8mllrvWy+KZd0JY5joTUhvQXoyDlmzKlxZOPuNDLlUuCNpY4ULkk0Bv0hzySYKEgdKQi+w7uWXWFI8W2BtXftKFD1S+zYdy6l/SbLt6Pb06rvvEZfs1u3UEGv28L6U26IgDTlD4oBPdtJhhAJDams5dRc35D5c9pgQi/KVKwTvDf4NRg/CB0v2mI1IGytckGwq6Ek0h2yiILG2DykXkYuOCfQM67YPFb3AurgfQ2rdgylWcf+JVWuzx0SvQMYCZdu7GDhKyntIXELrm90g7snQk63bHj3SGMPTbc+wYi3hbKS7JHrXkIHOsdT4qu7rbxHyb5Jt74qC9FLptlPIyteaOVXx/3G/8bXSbd+otLHCBWm4Rwg3O2NwGr9g/MngNP6bf1TvFrpYljhAMMbjMGFwGjcmSyxVzD+O18lr9vz34TJ4dUbhHys/hy6dXL7pKv8+fhn4+W+TVfvMtncJBz5eJ6+3i9fMJYdtTY3DN8qDhEs5XJJ6wh78e+riANBFN2I8RZ4mHBTHyk5ulIfu6p33FNoYZPlxGhQO6OVz+nCwJwxqZSAnvcQYAEo4MGfP6Yol1cmhwr+JkwmdI+I+CfdmhsxQEDfhGbfFgnn7CCvOkr4DKL8/hJ5l3Kvi+QcIl/EIxSZ7XunLQjjDoecgB3QWqGMFWAYMk9pidojl0AlnNvSIZPAy3en5nYoMuVcVBYnfSy6r8p7wPHoNMt4re06If+/cb+J5LJvOcYzw+5Q9ZyPSxoqxChIHh2x/WsY/hDHSd1M08Is+Vlh+OtunlnUHFm4zmyhIKAdLRjiQ7s3NajpAcD8qy9CD+H1lVejQMLSTBT3BVuX9kj0nMBtGdJ4ow/Eue06GYhr3d7LwpXHIPTqKwKpQ7C4l2fNK3U4NZRjomj0n8CUsy1dlVzs2pI0VLkjDceYxRhj9nu1PiV+gsTJk6pLWMPJ+jGyqIIEvApwNc+DkLJ2z+Oxx6zhQ+PZMDz5uyLOcd/a4VTiL4FIb+8NZCmfht5fssatwJsy/+xcIZ1v8+XzhCsDQ7uj0cuOKBe8N+3BryR7Xh/E/XDEg7xTOuPs6IJS4z0eR5WoDHRG4UkKR5yw0e3yGS5UMpuX9iPfkucIMHUPeXwYkM0CZs1U6RHCfbsgYph1JGyt8yW44fjnHCP/4sv0pjVmQhn7La8kcCpJtB5fZuDR2x06bDZA2VrggDeeCtDrrTILZChckG4qCxP1HsohZujclbawYqyBxTTPbn5aNVZBeKNn+lMYsSFNciM4FyYaihyczl3OJLNtuK6SNFWMVpHUHvLWAnmljZAoFaWqdGo4rMUhz23FBssVIGyvGKkh9o5dbdISMkSkUpFUTaraKnlhjxQXJFiNtrBirIJG++axawoSYY2UKBWnI+jItYR6vseKCZIuRNlaMWZAYJHcnYRr0bN9awAzKMUniWJlCQSJMxDlkXZcxMYdadzqcMeKCZIuRNlaMWZAiRwsT/jFieCez624K/fUfJGNdoiszlYIU4eYvo/2ZqqWcrmQMTLPD+I1VgyW3HRckW4y0saKFglTmSOEAwlQhuz49ujDamoMWg8bGutFdy9QKUhkKOxM4busSLcsMcObN1EjdpZpbiQuSLUbaWNFiQeqGiR35ts3U60MmEByKiSLvLUwH1F3/pcVMvSB1w+BC5tVigtG9WRphFQbmMrddzOXWclyQbDHSxorWC1IZpiJhXfi9+bbN7LxMxBmTJk4lcypIZfhCwFQ1665uSi85evYxlQwTS04pLki2GGljxdQKUjdcXmMeJ2bDPpewfDEz+3KZj2n0mbH4dsLsv7Hg1hQz54LUDTOpM4MHc6cx5X+cQbG09n7CaqZM3tmdJXmKcUGyxUgbK6ZckLKwJssvfvufs8lSClIWlj1o8T7QTuKCZIuRNlbMrSDNMUsuSHOMC5ItRtpY4YLUflyQ5hUXJFuMtLHCBan9uCDNKy5IthhpY4ULUvtxQZpXXJBsMdLGChek9uOCNK+4INlipI0VLkjtxwVpXnFBssVIGytckNqPC9K84oJki5E2VrggtR8XpHnFBckWI22scEFqPy5I84oLki1G2ljhgtR+XJDmFRckW4y0scIFqf24IM0rLki2GGljhQtS+3FBmldckGwx0saKt4rTdoYWJJaCd9qPC5ItRtpY4TOk9uMzpHnFBckWI22seJs4bedQyT67kgvSNHItyT4/s9lJGyveLE7beYFkn12JVVSd9nNVyT4/s9lJGysOEaft3Eeyzy7zTXHazjkl++zMZidtrODbmtN2ziHZZ5fhbMppN1+S7HMzm6W0scfHxGkz3OPLPrNVziBOu7mtZJ+b2SyljT3OJk57+ZmcXLLPrObu4rSXN0n2eZnNVto4wEXkJ+K0kW8LXxSyz2qI+4vTTt4g2edkNmtp40D7yvPFGTd0NMk+n3VdQt4jzng5Um4q2edjNntp45ooTNeRl8j3xdndfF3ojHA1yT6PnTqj3FmYleNocXY3n5JHyIUk+zzMFiNt3KFLycPlo+JsJh+Wg+Tckr3nu+VEcm15nlAInZ2HS91vlFvKfpK972aLlDZu0Gnk5sKAWm66O8PyQ3md3EAYwJq9t2O4oDxYjhBneL4oT5SrSPa+mpmkjbuIcUxPEcZXOL+bT8gj5XKSvXetObVwv+OV8iNx/i8/l3fIfeXMkr1/ZlZIG7eEXmFchnqvLDG/Fiar5X7N6SV7j6aES7WPky/IEvMt4T7q9WQfyd4jM6tIG0dwEjlAmBiUX+y55qvyHLmmHF+y92IOzip3krfLr2Su4dIl90v3l+x9MLM1pI0NuLAcLFzGmnrokMB9l3NJ9lrnjo4RLKHwXKFb85TDfVA6JNxMTivZ6zWzvZQ2NoZuyLeQw2QK9yq+Iy12SGjF+eUB8iGZQj4vTxXPum22y9LGxnFgeLK01DGCXlSPlctIts+Wo2BztvF6OUpayG+E+5r3krNLtt9mtgvSxgnhMtjfy7tkm+G+yOFyN5lDh4RW0MOQws5g0W2GZTiYdYQB3ieWbN/MbJeljRN1UmEQ58uEy2abTnRI4AztuJLtg20O3aUPFHoi0o160/mkMEMC9yuzv9/MtixtnImLyoOEe09fk3XzFWHGZc7AzifZ32HbcUJhKe9nywflu7JOKGicddEtmxkSTifZ32NmI0obZ+qUcl5hElEuDTFqnrOdcHlhJoLzyCkk+xnWDtZyooPEZeVKwmdIbz4KF/9/abmAcB9ozl3szWYjbTQzM9u2tNHMzGzb0kYzM7NtSxvNzMy2LW00MzPbtrTRzMxs29JGMzOz7TrmOP8D9LrpLEHx+oAAAAAASUVORK5CYII=" alt="C3">
+  <h1>DASHBOARD DE PERDAS · CC101 · REGAP</h1>
+  <small>Petrobras — Refinaria Gabriel Passos · C3 Engenharia &amp; Soluções · 23/06/2026</small>
+</div>
+
+<div class="layout">
+
+<!-- ═══════════════════ SIDEBAR ═══════════════════ -->
+<nav class="sidebar" id="sidebar">
+
+  <div class="sb-section">
+    <div class="sb-section-lbl">Navegação</div>
+    <div class="sb-item active" id="nav-painel" onclick="go('painel')">
+      <span class="ico">🏠</span>
+      <span class="lbl">Painel Geral</span>
+    </div>
+  </div>
+
+  <div class="sb-section">
+    <div class="sb-section-lbl">Disciplinas</div>
+
+    <!-- CIVIL -->
+    <div class="sb-item d-civ" id="nav-civil" onclick="toggleGroup('civil')">
+      <span class="ico">🏗️</span>
+      <span class="lbl">Civil / Projeto</span>
+      <span class="badge-cnt" id="cnt-civil">22</span>
+      <span class="arrow">▶</span>
+    </div>
+    <div class="sb-sub" id="sub-civil"></div>
+
+    <!-- ELÉTRICA -->
+    <div class="sb-item d-ele" id="nav-eletrica" onclick="toggleGroup('eletrica')">
+      <span class="ico">⚡</span>
+      <span class="lbl">Elétrica</span>
+      <span class="badge-cnt" id="cnt-eletrica">17</span>
+      <span class="arrow">▶</span>
+    </div>
+    <div class="sb-sub" id="sub-eletrica"></div>
+
+    <!-- MECÂNICA -->
+    <div class="sb-item d-mec" id="nav-mecanica" onclick="toggleGroup('mecanica')">
+      <span class="ico">⚙️</span>
+      <span class="lbl">Mecânica</span>
+      <span class="badge-cnt" id="cnt-mecanica">19</span>
+      <span class="arrow">▶</span>
+    </div>
+    <div class="sb-sub" id="sub-mecanica"></div>
+  </div>
+
+</nav>
+
+<!-- ═══════════════════ CONTENT ═══════════════════ -->
+<div class="content" id="contentArea">
+
+  <!-- ▸ SCREEN: PAINEL GERAL ──────────────────────── -->
+  <div class="screen active" id="screen-painel">
+    <div class="pg-hdr">
+      <span class="badge b-tot">Visão Geral</span>
+      <h2>Painel Geral de Perdas — CC101 REGAP</h2>
+    </div>
+    <div class="kpi-row">
+      <div class="kpi tot"><div class="kpi-lbl">Total Geral</div><div class="kpi-val" id="kv-tot">—</div><div class="kpi-sub" id="ks-tot">—</div></div>
+      <div class="kpi civ"><div class="kpi-lbl">Civil / Projeto</div><div class="kpi-val" id="kv-civ">—</div><div class="kpi-sub" id="ks-civ">—</div></div>
+      <div class="kpi ele"><div class="kpi-lbl">Elétrica</div><div class="kpi-val" id="kv-ele">—</div><div class="kpi-sub" id="ks-ele">—</div></div>
+      <div class="kpi mec"><div class="kpi-lbl">Mecânica</div><div class="kpi-val" id="kv-mec">—</div><div class="kpi-sub" id="ks-mec">—</div></div>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Distribuição por Disciplina</div>
+        <div class="donut-wrap">
+          <canvas id="chartDonut" style="max-width:180px;max-height:180px"></canvas>
+          <div class="donut-legend" id="donutLegend"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Top 8 — Maiores Perdas (todos os escopos)</div>
+        <div id="top8List"></div>
+      </div>
+    </div>
+    <div class="top-row" id="topRow"></div>
+  </div>
+
+  <!-- ▸ SCREEN: CIVIL ─────────────────────────────── -->
+  <div class="screen" id="screen-civil">
+    <div class="pg-hdr">
+      <span class="badge b-civ">Civil / Projeto</span>
+      <h2>Perdas — Civil / Projeto</h2>
+      <span style="margin-left:auto;font-size:12px;color:var(--sub)">Total: <strong id="disc-tot-civil" style="font-family:'Oswald',sans-serif;font-size:20px">—</strong></span>
+    </div>
+    <div class="card">
+      <div class="card-title">Horas de perda por escopo · ordenado ↓</div>
+      <div class="chart-wrap"><canvas id="chartCivil"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ▸ SCREEN: ELÉTRICA ──────────────────────────── -->
+  <div class="screen" id="screen-eletrica">
+    <div class="pg-hdr">
+      <span class="badge b-ele">Elétrica</span>
+      <h2>Perdas — Elétrica</h2>
+      <span style="margin-left:auto;font-size:12px;color:var(--sub)">Total: <strong id="disc-tot-eletrica" style="font-family:'Oswald',sans-serif;font-size:20px">—</strong></span>
+    </div>
+    <div class="card">
+      <div class="card-title">Horas de perda por escopo · ordenado ↓</div>
+      <div class="chart-wrap"><canvas id="chartElet"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ▸ SCREEN: MECÂNICA ──────────────────────────── -->
+  <div class="screen" id="screen-mecanica">
+    <div class="pg-hdr">
+      <span class="badge b-mec">Mecânica</span>
+      <h2>Perdas — Mecânica</h2>
+      <span style="margin-left:auto;font-size:12px;color:var(--sub)">Total: <strong id="disc-tot-mecanica" style="font-family:'Oswald',sans-serif;font-size:20px">—</strong></span>
+    </div>
+    <div class="card">
+      <div class="card-title">Horas de perda por escopo · ordenado ↓</div>
+      <div class="chart-wrap"><canvas id="chartMec"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ▸ SCREEN: DETALHE ESCOPO (nível 3) ─────────── -->
+  <div class="screen" id="screen-scope">
+    <div class="btn-back" onclick="goBack()">◀ Voltar para disciplina</div>
+    <div class="scope-hero" id="scopeHero"></div>
+    <div class="card">
+      <div class="card-title" id="rankTitle">Ranking da disciplina</div>
+      <table class="rank-table" id="rankTable">
+        <thead><tr><th>#</th><th>Escopo</th><th style="text-align:right">Horas</th><th>% Disciplina</th><th style="min-width:120px">Comparativo</th></tr></thead>
+        <tbody id="rankBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /content -->
+</div><!-- /layout -->
+
+<script>
+/* ════════════════════ DADOS ════════════════════ */
+const DADOS = {
+  civil:{
+    label:'Civil / Projeto', color:'#1565C0', colorLt:'#90CAF9', cls:'civ', icon:'🏗️',
+    scopes:[
+      {l:'ETDI FASE 2 - SS-74 2025',        h:18.13},
+      {l:'SS-60 2025 - ETDI DESARENADOR',   h:12.67},
+      {l:'ETDI FASE 1 - SS-61 2025',        h:10.85},
+      {l:'TQ-96 F-G-E-D',                   h:10.44},
+      {l:'SS-63 2026 ENV. ELÉTRICO S3',     h: 8.54},
+      {l:'SS-185 2026 - PRÉDIO DO IE',      h: 7.77},
+      {l:'U-121 - SS-66 2026',              h: 7.28},
+      {l:'SS-145 2025 C5+ ESCUROS',         h: 6.11},
+      {l:'SS-2 2026 - PT-200',              h: 5.73},
+      {l:'SS-187 2026 - PIPE RAK',          h: 5.28},
+      {l:'SS-198 2026 - CABLE RAK',         h: 4.29},
+      {l:'SS-132 2025 ENV. ELÉTRICO GPI',   h: 3.87},
+      {l:'SS-145 2025 - C5+ GLP',           h: 2.69},
+      {l:'SS-148 2025 - CP4',               h: 1.47},
+      {l:'SS-100 2026 TQ-116 A-F',          h: 1.41},
+      {l:'SS-145 2025 C5+ - PT 05',         h: 1.37},
+      {l:'SS-165 2026 - CIC',               h: 1.10},
+      {l:'SS-145 2025 - BOMBAS 28-P-01G',   h: 1.05},
+      {l:'TQ 01 A',                         h: 0.66},
+      {l:'SS-199 2026 - PERMUTADOR',        h: 0.25},
+      {l:'SS-182 2026 UT BARRAGEM IBIRITÉ', h: 0.04},
+      {l:'ED',                              h: 0.03},
+    ]
+  },
+  eletrica:{
+    label:'Elétrica', color:'#E65100', colorLt:'#FFCC80', cls:'ele', icon:'⚡',
+    scopes:[
+      {l:'PT-123',                h:8.40},
+      {l:'ETDI',                  h:4.82},
+      {l:'TQ-96',                 h:3.76},
+      {l:'CCL08',                 h:3.75},
+      {l:'COQUE',                 h:3.50},
+      {l:'SS-72 2026 - U-121',    h:1.01},
+      {l:'SS-4 2026 - PT-31',     h:0.90},
+      {l:'SS-62 2025 - U-42',     h:0.67},
+      {l:'SS-98 2026 - U-108',    h:0.66},
+      {l:'SS-228 2025 - CCFII',   h:0.53},
+      {l:'SS-4 2026 - U-47',      h:0.38},
+      {l:'SS-4 2026 - U-003',     h:0.36},
+      {l:'SS-147 2025 - PT-05',   h:0.29},
+      {l:'SS-101 2026 - CIC',     h:0.29},
+      {l:'PT-12',                 h:0.27},
+      {l:'SS-63 2026 - S3-4-5-6', h:0.26},
+      {l:'SS-132 2025 - GPI',     h:0.02},
+    ]
+  },
+  mecanica:{
+    label:'Mecânica', color:'#2E7D32', colorLt:'#A5D6A7', cls:'mec', icon:'⚙️',
+    scopes:[
+      {l:'SS-134 2025 - COQUE UN.54',     h:6.76},
+      {l:'SS-161 2026 - UN.108',          h:3.41},
+      {l:'SS-146 2025 - C5+',            h:3.03},
+      {l:'SS-142 2025 - GASOLINA',        h:2.85},
+      {l:'SS-114 2025 - PRÉDIO EI',       h:2.29},
+      {l:'SS-100 2025 - TQ-116 A-F',      h:1.95},
+      {l:'SS-42 2025 - TQ-96E-G',         h:1.89},
+      {l:'SS-161 2026 - ETDI',           h:1.53},
+      {l:'SS-97 2025 - 27-TQ-K-M',       h:0.92},
+      {l:'SS-96 2025 - 27-TQ-01C-D-E',   h:0.86},
+      {l:'SS-161 2026 - UN.106',          h:0.77},
+      {l:'SS-161 2026 - UN.001',          h:0.66},
+      {l:'SS-161 2026 - UN.102',          h:0.59},
+      {l:'SS-98 2025 - 27-TQ-LN',        h:0.58},
+      {l:'SS-14 2026 - HAZOP',           h:0.49},
+      {l:'SS-176 2025 - DIESEL U-19',     h:0.42},
+      {l:'SS-161 2026 - UN.103',          h:0.36},
+      {l:'PRÉDIO ED',                     h:0.17},
+      {l:'SS-93 2026 - UFV',             h:0.08},
+    ]
+  }
+};
+
+const FMT = n => n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const sum = arr => arr.reduce((a,b)=>a+b.h,0);
+const pct = (v,t) => (v/t*100).toFixed(1).replace('.',',')+' %';
+
+const totCiv = sum(DADOS.civil.scopes);
+const totEle = sum(DADOS.eletrica.scopes);
+const totMec = sum(DADOS.mecanica.scopes);
+const totGeral = totCiv + totEle + totMec;
+
+/* ════════════════════ SIDEBAR DINÂMICO ════════════ */
+const DISC_KEYS = ['civil','eletrica','mecanica'];
+DISC_KEYS.forEach(dk=>{
+  const d = DADOS[dk];
+  const sub = document.getElementById('sub-'+dk);
+  d.scopes.forEach((s,i)=>{
+    const el = document.createElement('div');
+    el.className = 'sb-sub-item';
+    el.dataset.disc = dk;
+    el.dataset.idx = i;
+    el.innerHTML = `<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${s.l}">${s.l}</span><span class="h-tag">${FMT(s.h)}h</span>`;
+    el.onclick = () => openScope(dk, i, el);
+    sub.appendChild(el);
+  });
+});
+
+/* ════════════════════ KPIs ════════════════════ */
+document.getElementById('kv-tot').innerHTML = FMT(totGeral)+'<span>h</span>';
+document.getElementById('ks-tot').textContent = (DADOS.civil.scopes.length+DADOS.eletrica.scopes.length+DADOS.mecanica.scopes.length)+' escopos · 3 disciplinas';
+document.getElementById('kv-civ').innerHTML = FMT(totCiv)+'<span>h</span>';
+document.getElementById('ks-civ').textContent = DADOS.civil.scopes.length+' escopos · '+pct(totCiv,totGeral);
+document.getElementById('kv-ele').innerHTML = FMT(totEle)+'<span>h</span>';
+document.getElementById('ks-ele').textContent = DADOS.eletrica.scopes.length+' escopos · '+pct(totEle,totGeral);
+document.getElementById('kv-mec').innerHTML = FMT(totMec)+'<span>h</span>';
+document.getElementById('ks-mec').textContent = DADOS.mecanica.scopes.length+' escopos · '+pct(totMec,totGeral);
+
+document.getElementById('disc-tot-civil').textContent = FMT(totCiv)+' h';
+document.getElementById('disc-tot-eletrica').textContent = FMT(totEle)+' h';
+document.getElementById('disc-tot-mecanica').textContent = FMT(totMec)+' h';
+
+/* ════════════════════ DONUT ════════════════════ */
+new Chart(document.getElementById('chartDonut'),{
+  type:'doughnut',
+  data:{
+    labels:['Civil / Projeto','Elétrica','Mecânica'],
+    datasets:[{
+      data:[totCiv,totEle,totMec],
+      backgroundColor:['#1565C0','#E65100','#2E7D32'],
+      borderWidth:2,borderColor:'#fff'
+    }]
+  },
+  options:{
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${FMT(c.raw)} h (${pct(c.raw,totGeral)})`}}},
+    cutout:'65%'
+  }
+});
+const dLegend = document.getElementById('donutLegend');
+[{n:'Civil / Projeto',v:totCiv,c:'#1565C0'},{n:'Elétrica',v:totEle,c:'#E65100'},{n:'Mecânica',v:totMec,c:'#2E7D32'}]
+  .forEach(d=>{
+    dLegend.innerHTML+=`<div class="dl-item">
+      <div class="dl-dot" style="background:${d.c}"></div>
+      <div class="dl-name">${d.n}</div>
+      <div><div class="dl-val" style="color:${d.c}">${FMT(d.v)}<small style="font-size:12px">h</small></div>
+      <div class="dl-pct">${pct(d.v,totGeral)}</div></div>
+    </div>`;
+  });
+
+/* ════════════════════ TOP 8 GERAL ══════════════ */
+const allScopes = [
+  ...DADOS.civil.scopes.map(s=>({...s,disc:'civil'})),
+  ...DADOS.eletrica.scopes.map(s=>({...s,disc:'eletrica'})),
+  ...DADOS.mecanica.scopes.map(s=>({...s,disc:'mecanica'})),
+].sort((a,b)=>b.h-a.h).slice(0,8);
+const top8El = document.getElementById('top8List');
+const maxH8 = allScopes[0].h;
+allScopes.forEach((s,i)=>{
+  const d = DADOS[s.disc];
+  const w = (s.h/maxH8*100).toFixed(0);
+  top8El.innerHTML+=`<div class="top-item">
+    <div class="top-rank" style="background:${d.color}">${i+1}</div>
+    <div class="top-lbl" title="${s.l}">${s.l.length>32?s.l.slice(0,30)+'…':s.l}</div>
+    <div class="top-h" style="color:${d.color}">${FMT(s.h)}<span style="font-size:10px">h</span></div>
+  </div>
+  <div class="bar-bg" style="margin:2px 0 4px 26px"><div class="bar-fill" style="width:${w}%;background:${d.color}"></div></div>`;
+});
+
+/* ════════════════════ TOP 3 POR DISCIPLINA ═════ */
+const topRow = document.getElementById('topRow');
+DISC_KEYS.forEach(dk=>{
+  const d = DADOS[dk];
+  const top3 = d.scopes.slice(0,3);
+  let rows = '';
+  top3.forEach((s,i)=>{
+    rows+=`<div class="top-item">
+      <div class="top-rank" style="background:${d.color}">${i+1}</div>
+      <div class="top-lbl" title="${s.l}">${s.l.length>28?s.l.slice(0,26)+'…':s.l}</div>
+      <div class="top-h" style="color:${d.color}">${FMT(s.h)}<span style="font-size:10px">h</span></div>
+    </div>`;
+  });
+  topRow.innerHTML+=`<div class="top-card">
+    <div class="top-card-hdr"><div class="dl-dot" style="background:${d.color}"></div><span>${d.icon} ${d.label}</span></div>
+    ${rows}
+    <div style="margin-top:8px;font-size:11px;color:var(--sub);cursor:pointer;text-decoration:underline" onclick="go('${dk}')">Ver todos ${d.scopes.length} escopos →</div>
+  </div>`;
+});
+
+/* ════════════════════ CHARTS (lazy) ═════════════ */
+const charts = {};
+function buildBarChart(id, data, color, colorLt){
+  if(charts[id]) return;
+  const cvs = document.getElementById(id);
+  cvs.style.height = Math.max(260, data.length*38)+'px';
+  charts[id] = new Chart(cvs,{
+    type:'bar',
+    data:{
+      labels: data.map(s=>s.l),
+      datasets:[{
+        label:'Horas',
+        data: data.map(s=>s.h),
+        backgroundColor: data.map((_,i)=> i<3 ? color : colorLt+'CC'),
+        borderColor: color, borderWidth:1, borderRadius:4
+      }]
+    },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${FMT(c.raw)} h`}}},
+      scales:{
+        x:{grid:{color:'#eee'},ticks:{callback:v=>v+'h',font:{size:11}}},
+        y:{grid:{display:false},ticks:{font:{size:11.5},padding:4}}
+      }
+    }
+  });
+}
+
+/* ════════════════════ NAVEGAÇÃO ════════════════ */
+let currentScreen = 'painel';
+let prevDisc = null;
+
+function go(screen){
+  // Hide all screens
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+screen).classList.add('active');
+  currentScreen = screen;
+
+  // Update nav active state
+  document.querySelectorAll('.sb-item').forEach(el=>el.classList.remove('active'));
+  const navEl = document.getElementById('nav-'+screen);
+  if(navEl) navEl.classList.add('active');
+
+  // Clear sub-item active
+  document.querySelectorAll('.sb-sub-item').forEach(el=>{
+    el.classList.remove('active','act-civ','act-ele','act-mec');
+  });
+
+  // Scroll to top
+  document.getElementById('contentArea').scrollTop = 0;
+
+  // Build charts lazily
+  if(screen==='civil') buildBarChart('chartCivil', DADOS.civil.scopes, DADOS.civil.color, DADOS.civil.colorLt);
+  if(screen==='eletrica') buildBarChart('chartElet', DADOS.eletrica.scopes, DADOS.eletrica.color, DADOS.eletrica.colorLt);
+  if(screen==='mecanica') buildBarChart('chartMec', DADOS.mecanica.scopes, DADOS.mecanica.color, DADOS.mecanica.colorLt);
+
+  if(['civil','eletrica','mecanica'].includes(screen)) prevDisc = screen;
+}
+
+function toggleGroup(dk){
+  const sub = document.getElementById('sub-'+dk);
+  const item = document.getElementById('nav-'+dk);
+  const isOpen = sub.classList.contains('open');
+  // Close all
+  document.querySelectorAll('.sb-sub').forEach(s=>s.classList.remove('open'));
+  document.querySelectorAll('.sb-item.open').forEach(i=>i.classList.remove('open'));
+  if(!isOpen){
+    sub.classList.add('open');
+    item.classList.add('open');
+  }
+  go(dk);
+}
+
+function openScope(dk, idx, el){
+  const d = DADOS[dk];
+  const s = d.scopes[idx];
+  const discTotal = sum(d.scopes);
+  const maxInDisc = d.scopes[0].h;
+  const pctDisc = (s.h/discTotal*100).toFixed(1).replace('.',',');
+  const pctGeral2 = (s.h/totGeral*100).toFixed(1).replace('.',',');
+  const barW = (s.h/maxInDisc*100).toFixed(0);
+  const rank = idx+1;
+
+  // Render hero
+  document.getElementById('scopeHero').innerHTML=`
+    <span class="badge" style="background:${d.color}">${d.icon} ${d.label}</span>
+    <div class="scope-name">${s.l}</div>
+    <div class="scope-meta">
+      <div class="scope-meta-item">
+        <div class="smi-lbl">Horas de perda</div>
+        <div class="smi-val" style="color:${d.color}">${FMT(s.h)}<span style="font-size:14px;color:var(--sub)"> h</span></div>
+      </div>
+      <div class="scope-meta-item">
+        <div class="smi-lbl">% da disciplina</div>
+        <div class="smi-val" style="color:${d.color}">${pctDisc}<span style="font-size:14px;color:var(--sub)"> %</span></div>
+      </div>
+      <div class="scope-meta-item">
+        <div class="smi-lbl">% do total geral</div>
+        <div class="smi-val" style="color:var(--sub);font-size:20px">${pctGeral2}<span style="font-size:12px"> %</span></div>
+      </div>
+      <div class="scope-meta-item">
+        <div class="smi-lbl">Posição na disciplina</div>
+        <div class="smi-val" style="color:var(--sub);font-size:20px">${rank}°<span style="font-size:12px"> / ${d.scopes.length}</span></div>
+      </div>
+    </div>
+    <div class="prog-wrap">
+      <div class="prog-lbl">Peso relativo vs. maior perda da disciplina (${FMT(maxInDisc)} h)</div>
+      <div class="prog-bg"><div class="prog-fill" style="width:${barW}%;background:${d.color}"></div></div>
+    </div>`;
+
+  // Render rank table
+  document.getElementById('rankTitle').textContent = `Ranking — ${d.label} (${d.scopes.length} escopos)`;
+  let rows = '';
+  d.scopes.forEach((sc,i)=>{
+    const w = (sc.h/maxInDisc*100).toFixed(0);
+    const hl = i===idx ? ' highlight' : '';
+    rows+=`<tr class="${hl}">
+      <td>${i+1}</td>
+      <td>${sc.l}</td>
+      <td style="text-align:right;font-family:'Oswald',sans-serif;font-size:14px;color:${d.color}">${FMT(sc.h)} h</td>
+      <td style="color:var(--sub)">${(sc.h/discTotal*100).toFixed(1).replace('.',',')} %</td>
+      <td><div class="bar-bg"><div class="bar-fill" style="width:${w}%;background:${d.color}${i===idx?'':'88'}"></div></div></td>
+    </tr>`;
+  });
+  document.getElementById('rankBody').innerHTML = rows;
+
+  // Show scope screen
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-scope').classList.add('active');
+  document.getElementById('contentArea').scrollTop = 0;
+
+  // Nav highlight
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
+  document.querySelectorAll('.sb-sub-item').forEach(i=>{
+    i.classList.remove('active','act-civ','act-ele','act-mec');
+  });
+  el.classList.add('active','act-'+DADOS[dk].cls);
+  prevDisc = dk;
+}
+
+function goBack(){
+  if(prevDisc) go(prevDisc);
+  else go('painel');
+}
+</script>
+</body>
+</html>
