@@ -443,9 +443,6 @@ tbody tr:nth-child(even):hover{background:var(--azul-claro);}
     </div>
 
 
-  </div><!-- /content -->
-</main>
-
 
 <!-- ===== SCREEN JUNTAS ===== -->
 <div class="screen" id="screen-juntas">
@@ -454,7 +451,7 @@ tbody tr:nth-child(even):hover{background:var(--azul-claro);}
     <div class="kpi azul">
       <div class="kpi-label">Total de Juntas</div>
       <div class="kpi-val" id="jt-total">118.341</div>
-      <div class="kpi-sub">Mudancas 2.1 + 4.1</div>
+      <div class="kpi-sub">Muda&ccedil;as 2.1 + 4.1</div>
     </div>
     <div class="kpi">
       <div class="kpi-label">J &mdash; Pipe Shop</div>
@@ -470,30 +467,30 @@ tbody tr:nth-child(even):hover{background:var(--azul-claro);}
   <div class="cards-row">
     <div class="card" style="grid-column:1/-1;">
       <div class="card-title">J vs JC por Folha</div>
-      <div class="card-sub">Juntas de Pipe Shop (J) e de Campo (JC) por folha do isometrico</div>
+      <div class="card-sub">Juntas de Pipe Shop (J) e de Campo (JC) por folha do isom&eacute;trico</div>
       <canvas id="chart-juntas-folhas" style="max-height:320px;"></canvas>
     </div>
   </div>
   <div class="cards-row">
     <div class="card">
-      <div class="card-title">Distribuicao &mdash; Mudanca 2.1</div>
+      <div class="card-title">Distribui&ccedil;&atilde;o &mdash; Muda&ccedil;a 2.1</div>
       <div class="card-sub">J = 20.878 &middot; JC = 25.787</div>
       <canvas id="chart-juntas-21" style="max-height:220px;"></canvas>
     </div>
     <div class="card">
-      <div class="card-title">Distribuicao &mdash; Mudanca 4.1</div>
+      <div class="card-title">Distribui&ccedil;&atilde;o &mdash; Muda&ccedil;a 4.1</div>
       <div class="card-sub">J = 7.133 &middot; JC = 64.543</div>
       <canvas id="chart-juntas-41" style="max-height:220px;"></canvas>
     </div>
   </div>
   <div class="card">
     <div class="card-title">Detalhamento por Folha</div>
-    <div class="card-sub">Contagem de juntas J (Pipe Shop) e JC (Campo) por folha do isometrico</div>
+    <div class="card-sub">Contagem de juntas J (Pipe Shop) e JC (Campo) por folha do isom&eacute;trico</div>
     <div class="tbl-wrap" style="margin-top:12px;">
       <table>
         <thead>
           <tr>
-            <th>Mudanca</th><th>Isometrico</th><th>Folha</th>
+            <th>Muda&ccedil;a</th><th>Isom&eacute;trico</th><th>Folha</th>
             <th style="text-align:right;">J (Pipe Shop)</th>
             <th style="text-align:right;">JC (Campo)</th>
             <th style="text-align:right;">Total</th>
@@ -511,9 +508,9 @@ tbody tr:nth-child(even):hover{background:var(--azul-claro);}
   <h2 style="font-size:15px;color:var(--azul);margin-bottom:16px;font-weight:700;">Lista de Materiais por Desenho</h2>
   <div class="filtros" style="margin-bottom:20px;">
     <select id="mat-mud" onchange="filtrarMatList()">
-      <option value="">Todas as Mudancas</option>
-      <option value="2.1">Mudanca 2.1</option>
-      <option value="4.1">Mudanca 4.1</option>
+      <option value="">Todas as Muda&ccedil;as</option>
+      <option value="2.1">Muda&ccedil;a 2.1</option>
+      <option value="4.1">Muda&ccedil;a 4.1</option>
     </select>
     <select id="mat-folha" onchange="filtrarMatList()">
       <option value="">Selecione a Folha</option>
@@ -523,7 +520,7 @@ tbody tr:nth-child(even):hover{background:var(--azul-claro);}
   <div id="mat-resumo" style="display:none;margin-bottom:20px;">
     <div class="kpi-grid">
       <div class="kpi azul">
-        <div class="kpi-label">Isometrico</div>
+        <div class="kpi-label">Isom&eacute;trico</div>
         <div class="kpi-val" id="mat-iso" style="font-size:13px;font-weight:700;">--</div>
         <div class="kpi-sub" id="mat-folha-label">--</div>
       </div>
@@ -535,8 +532,8 @@ tbody tr:nth-child(even):hover{background:var(--azul-claro);}
   </div>
   <div id="mat-placeholder" style="text-align:center;padding:60px 0;color:var(--cinza3);">
     <div style="font-size:48px;margin-bottom:12px;">&#128210;</div>
-    <div style="font-size:15px;font-weight:600;">Selecione uma mudanca e folha acima</div>
-    <div style="font-size:13px;margin-top:6px;">A lista de materiais do isometrico sera exibida aqui</div>
+    <div style="font-size:15px;font-weight:600;">Selecione uma muda&ccedil;a e folha acima</div>
+    <div style="font-size:13px;margin-top:6px;">A lista de materiais do isom&eacute;trico ser&aacute; exibida aqui</div>
   </div>
   <div id="mat-tbl-wrap" style="display:none;" class="card">
     <div class="card-title" id="mat-card-title">Lista de Spools</div>
@@ -545,7 +542,7 @@ tbody tr:nth-child(even):hover{background:var(--azul-claro);}
       <table>
         <thead>
           <tr>
-            <th>Spool</th><th>Diam. (pol)</th>
+            <th>Spool</th><th>Di&acirc;m. (pol)</th>
             <th style="text-align:right;">Comp. (m)</th>
             <th style="text-align:right;">J (Pipe Shop)</th>
             <th style="text-align:right;">JC (Campo)</th>
@@ -558,6 +555,10 @@ tbody tr:nth-child(even):hover{background:var(--azul-claro);}
     </div>
   </div>
 </div>
+
+  </div><!-- /content -->
+</main>
+
 
 
 <script>
