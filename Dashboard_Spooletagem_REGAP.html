@@ -960,64 +960,72 @@ function matSelecionarMud(mud){
   _matMud = mud;
   _matFolha = null;
   document.getElementById('mat-detalhe').style.display = 'none';
-  // Destacar card ativo
   ['mc-all','mc-21','mc-41'].forEach(id=>document.getElementById(id).classList.remove('active'));
   document.getElementById(mud===''?'mc-all':mud==='2.1'?'mc-21':'mc-41').classList.add('active');
-  // Renderizar grade de folhas
   matRenderFolhas();
 }
 
 function matRenderFolhas(){
-  const grid = document.getElementById('mat-folhas-grid');
+  const grid  = document.getElementById('mat-folhas-grid');
   const label = document.getElementById('mat-folhas-label');
   const lista = _matMud ? FOLHAS.filter(f=>f.mudanca===_matMud) : FOLHAS;
   label.textContent = lista.length + ' desenho(s) disponível(is) — clique para ver a lista de materiais';
-  grid.innerHTML = lista.map(f=>{
-    const total = f.J + f.JC;
-    const cls = f.mudanca==='2.1'?'m21':'m41';
-    const isActive = _matFolha && _matFolha.mudanca===f.mudanca && _matFolha.folha===f.folha ? ' active' : '';
-    return `<div class="folha-card${isActive}" onclick="matAbrirFolha('${f.mudanca}','${f.folha.replace(/'/g,"\\'")}')">
+
+  grid.innerHTML = lista.map((f,i)=>{
+    const cls      = f.mudanca==='2.1' ? 'm21' : 'm41';
+    const isActive = (_matFolha && _matFolha===f) ? ' active' : '';
+    return `<div class="folha-card${isActive}" data-idx="${i}">
       <div class="fc-iso"><span class="badge-m ${cls}">${f.mudanca}</span> ${f.iso}</div>
       <div class="fc-folha">Folha ${f.folha}</div>
       <div class="fc-stats">
         <span><b>${f.spools.length}</b>spools</span>
-        <span><b>${f.J.toLocaleString('pt-BR')}</b>J</span>
-        <span><b>${f.JC.toLocaleString('pt-BR')}</b>JC</span>
+        <span><b>${f.J}</b>J</span>
+        <span><b>${f.JC}</b>JC</span>
         <span><b>${f.comp_m.toFixed(0)}m</b>comp</span>
       </div>
     </div>`;
   }).join('');
+
+  // Usar event listeners em vez de onclick inline
+  grid.querySelectorAll('.folha-card').forEach((el, i)=>{
+    el.addEventListener('click', ()=> matAbrirFolha(lista[i]));
+  });
 }
 
-function matAbrirFolha(mudanca, folha){
-  _matFolha = FOLHAS.find(f=>f.mudanca===mudanca && f.folha===folha);
-  if(!_matFolha) return;
-  matRenderFolhas(); // re-render para marcar card ativo
+function matAbrirFolha(folhaObj){
+  _matFolha = folhaObj;
 
-  const f = _matFolha;
-  document.getElementById('mat-iso').textContent        = f.iso;
-  document.getElementById('mat-folha-label').textContent= 'Folha ' + f.folha;
-  document.getElementById('mat-n-spools').textContent   = f.spools.length;
-  document.getElementById('mat-J').textContent          = f.J.toLocaleString('pt-BR');
-  document.getElementById('mat-JC').textContent         = f.JC.toLocaleString('pt-BR');
-  document.getElementById('mat-comp').textContent       = f.comp_m.toFixed(1).replace('.',',') + ' m';
-  document.getElementById('mat-peso').textContent       = f.peso_kg.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}) + ' kg';
-  document.getElementById('mat-card-title').textContent = 'Spools — ' + f.iso + ' / ' + f.folha;
-  document.getElementById('mat-card-sub').textContent   = f.spools.length + ' spools · J=' + f.J.toLocaleString('pt-BR') + ' · JC=' + f.JC.toLocaleString('pt-BR');
+  // Atualizar destaque visual nos cards sem re-renderizar o grid inteiro
+  document.querySelectorAll('#mat-folhas-grid .folha-card').forEach(el=>el.classList.remove('active'));
+  const idx = ((_matMud ? FOLHAS.filter(f=>f.mudanca===_matMud) : FOLHAS)).indexOf(folhaObj);
+  const cards = document.querySelectorAll('#mat-folhas-grid .folha-card');
+  if(cards[idx]) cards[idx].classList.add('active');
 
-  let rows='';
+  const f = folhaObj;
+  document.getElementById('mat-iso').textContent         = f.iso;
+  document.getElementById('mat-folha-label').textContent = 'Folha ' + f.folha;
+  document.getElementById('mat-n-spools').textContent    = f.spools.length;
+  document.getElementById('mat-J').textContent           = f.J.toLocaleString('pt-BR');
+  document.getElementById('mat-JC').textContent          = f.JC.toLocaleString('pt-BR');
+  document.getElementById('mat-comp').textContent        = f.comp_m.toFixed(1).replace('.',',') + ' m';
+  document.getElementById('mat-peso').textContent        = f.peso_kg.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}) + ' kg';
+  document.getElementById('mat-card-title').textContent  = 'Spools — ' + f.iso + ' / ' + f.folha;
+  document.getElementById('mat-card-sub').textContent    = f.spools.length + ' spools · J=' + f.J.toLocaleString('pt-BR') + ' · JC=' + f.JC.toLocaleString('pt-BR');
+
+  let rows = '';
   f.spools.forEach(s=>{
-    const tot = s.J + s.JC;
+    const tot  = s.J + s.JC;
     const tipo = s.JC >= s.J
       ? '<span class="badge-m m41">Campo</span>'
       : '<span class="badge-m m21">Pipe Shop</span>';
     const dn   = s.diam==='3/4' ? '3/4"' : (s.diam==='6' ? '6"' : s.diam);
     const comp = s.comp_m ? s.comp_m.toFixed(3).replace('.',',') : '—';
+    const peso = s.peso_kg ? s.peso_kg.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}) : '—';
     rows += `<tr>
       <td style="font-weight:700;">${s.spool}</td>
       <td>${dn}</td>
       <td style="text-align:right;">${comp}</td>
-      <td style="text-align:right;">${s.peso_kg ? s.peso_kg.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}) : '—'}</td>
+      <td style="text-align:right;">${peso}</td>
       <td style="text-align:right;">${s.J || '—'}</td>
       <td style="text-align:right;">${s.JC || '—'}</td>
       <td style="text-align:right;font-weight:700;">${tot}</td>
@@ -1026,8 +1034,9 @@ function matAbrirFolha(mudanca, folha){
   });
   document.getElementById('mat-tbody').innerHTML = rows;
   document.getElementById('mat-detalhe').style.display = 'block';
-  document.getElementById('mat-detalhe').scrollIntoView({behavior:'smooth',block:'start'});
+  document.getElementById('mat-detalhe').scrollIntoView({behavior:'smooth', block:'start'});
 }
+
 
 function filtrarMatList(){
   matRenderFolhas();
