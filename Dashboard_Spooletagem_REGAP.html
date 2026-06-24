@@ -590,6 +590,11 @@ tbody tr:nth-child(even):hover{background:var(--azul-claro);}
         <div class="kpi-val" id="mat-comp">--</div>
         <div class="kpi-sub">metros</div>
       </div>
+      <div class="kpi">
+        <div class="kpi-label">Peso Total</div>
+        <div class="kpi-val" id="mat-peso">--</div>
+        <div class="kpi-sub">kg</div>
+      </div>
     </div>
     <div class="card">
       <div class="card-title" id="mat-card-title">Lista de Spools</div>
@@ -992,7 +997,7 @@ function matRenderFolhas(){
   });
 }
 
-function matAbrirFolha(folhaObj){
+function matAbrirFolha(folhaObj){ try {
   _matFolha = folhaObj;
 
   // Atualizar destaque visual nos cards sem re-renderizar o grid inteiro
@@ -1035,6 +1040,7 @@ function matAbrirFolha(folhaObj){
   document.getElementById('mat-tbody').innerHTML = rows;
   document.getElementById('mat-detalhe').style.display = 'block';
   document.getElementById('mat-detalhe').scrollIntoView({behavior:'smooth', block:'start'});
+  } catch(e){ console.error('matAbrirFolha error:', e); }
 }
 
 
