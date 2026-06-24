@@ -4,279 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard Spooletagem — REGAP | C3 Engenharia</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
-// Donut spools
-new Chart(document.getElementById('chart-donut'),{
-  type:'doughnut',
-  data:{
-    labels:['Mudança 2.1','Mudança 4.1'],
-    datasets:[{data:[140,145],backgroundColor:[COR_AZUL,COR_LAR],borderWidth:0,hoverOffset:8}]
-  },
-  options:{responsive:true,cutout:'65%',
-    plugins:{legend:{position:'bottom',labels:{padding:16,font:{size:12}}},
-             tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.raw} spools (${(ctx.raw/285*100).toFixed(1)}%)`}}}}
-});
-
-// Peso por mudança
-new Chart(document.getElementById('chart-peso-mud'),{
-  type:'bar',
-  data:{
-    labels:['Mudança 2.1','Mudança 4.1'],
-    datasets:[{label:'Peso (kg)',data:[18578,19181],backgroundColor:[COR_AZUL,COR_LAR],borderRadius:8,borderSkipped:false}]
-  },
-  options:{...opts(),plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{callback:v=>`${(v/1000).toFixed(0)}t`}}}}
-});
-
-// Comprimento por isométrico (todas folhas)
-const folhas21 = D.mud21.folhas;
-const folhas41 = D.mud41.folhas;
-const allFolhas = [...folhas21.map(f=>({...f,mud:'2.1'})),...folhas41.map(f=>({...f,mud:'4.1'}))];
-new Chart(document.getElementById('chart-comp-iso'),{
-  type:'bar',
-  data:{
-    labels:allFolhas.map(f=>`P-${f.mud==='2.1'?'6328':'6335'} ${f.folha}`),
-    datasets:[{
-      label:'Comprimento (m)',
-      data:allFolhas.map(f=>f.comp),
-      backgroundColor:allFolhas.map(f=>f.mud==='2.1'?COR_AZUL:COR_LAR),
-      borderRadius:4
-    }]
-  },
-  options:{...opts(),plugins:{legend:{display:false}},
-    scales:{x:{ticks:{font:{size:9},maxRotation:45}},y:{ticks:{callback:v=>v+'m'}}}}
-});
-
-
-// Radar comparativo
-new Chart(document.getElementById('chart-radar'),{
-  type:'radar',
-  data:{
-    labels:['Spools','Comprimento (×10m)','Peso (×500kg)','Folhas ISO','Revisão'],
-    datasets:[
-      {label:'Mudança 2.1',data:[140,69.2,37.2,13,2],backgroundColor:'rgba(27,58,107,.15)',borderColor:COR_AZUL,pointBackgroundColor:COR_AZUL,borderWidth:2},
-      {label:'Mudança 4.1',data:[145,67.9,38.4,10,1],backgroundColor:'rgba(244,121,32,.15)',borderColor:COR_LAR,pointBackgroundColor:COR_LAR,borderWidth:2}
-    ]
-  },
-  options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:12}}}},
-    scales:{r:{beginAtZero:true,ticks:{display:false},grid:{color:'#E2E8F0'},pointLabels:{font:{size:11}}}}}
-});
-
-// ===== MUD 2.1 charts =====
-new Chart(document.getElementById('chart-21-folha-n'),{
-  type:'bar',
-  data:{labels:D.mud21.folhas.map(f=>f.folha),
-    datasets:[{label:'Spools',data:D.mud21.folhas.map(f=>f.n),backgroundColor:COR_AZUL,borderRadius:6}]
-  },
-  options:{...opts(),plugins:{legend:{display:false}}}
-});
-new Chart(document.getElementById('chart-21-folha-peso'),{
-  type:'bar',
-  data:{labels:D.mud21.folhas.map(f=>f.folha),
-    datasets:[{label:'Peso (kg)',data:D.mud21.folhas.map(f=>f.peso),backgroundColor:COR_LAR,borderRadius:6}]
-  },
-  options:{...opts(),plugins:{legend:{display:false}},
-    scales:{y:{ticks:{callback:v=>`${(v/1000).toFixed(1)}t`}}}}
-});
-// Acumulado 2.1
-const acum21=[];let sum21=0;D.mud21.folhas.forEach(f=>{sum21+=f.comp;acum21.push(+sum21.toFixed(1));});
-new Chart(document.getElementById('chart-21-acum'),{
-  type:'line',
-  data:{labels:D.mud21.folhas.map(f=>f.folha),
-    datasets:[
-      {label:'Acumulado (m)',data:acum21,borderColor:COR_AZUL,backgroundColor:'rgba(27,58,107,.1)',fill:true,tension:.4,pointRadius:5,pointBackgroundColor:COR_AZUL},
-      {label:'Por Folha (m)',data:D.mud21.folhas.map(f=>f.comp),borderColor:COR_LAR,backgroundColor:'transparent',tension:.4,pointRadius:4,pointBackgroundColor:COR_LAR,borderDash:[5,4]}
-    ]
-  },
-  options:{responsive:true,plugins:{legend:{position:'bottom'}},
-    scales:{y:{beginAtZero:true,ticks:{callback:v=>v+'m'}},x:{grid:{display:false}}}}
-});
-
-// ===== MUD 4.1 charts =====
-new Chart(document.getElementById('chart-41-folha-n'),{
-  type:'bar',
-  data:{labels:D.mud41.folhas.map(f=>f.folha),
-    datasets:[{label:'Spools',data:D.mud41.folhas.map(f=>f.n),backgroundColor:COR_LAR,borderRadius:6}]
-  },
-  options:{...opts(),plugins:{legend:{display:false}}}
-});
-new Chart(document.getElementById('chart-41-folha-peso'),{
-  type:'bar',
-  data:{labels:D.mud41.folhas.map(f=>f.folha),
-    datasets:[{label:'Peso (kg)',data:D.mud41.folhas.map(f=>f.peso),backgroundColor:COR_AZUL,borderRadius:6}]
-  },
-  options:{...opts(),plugins:{legend:{display:false}},
-    scales:{y:{ticks:{callback:v=>`${(v/1000).toFixed(1)}t`}}}}
-});
-const acum41=[];let sum41=0;D.mud41.folhas.forEach(f=>{sum41+=f.comp;acum41.push(+sum41.toFixed(1));});
-new Chart(document.getElementById('chart-41-acum'),{
-  type:'line',
-  data:{labels:D.mud41.folhas.map(f=>f.folha),
-    datasets:[
-      {label:'Acumulado (m)',data:acum41,borderColor:COR_LAR,backgroundColor:'rgba(244,121,32,.1)',fill:true,tension:.4,pointRadius:5,pointBackgroundColor:COR_LAR},
-      {label:'Por Folha (m)',data:D.mud41.folhas.map(f=>f.comp),borderColor:COR_AZUL,backgroundColor:'transparent',tension:.4,pointRadius:4,pointBackgroundColor:COR_AZUL,borderDash:[5,4]}
-    ]
-  },
-  options:{responsive:true,plugins:{legend:{position:'bottom'}},
-    scales:{y:{beginAtZero:true,ticks:{callback:v=>v+'m'}},x:{grid:{display:false}}}}
-});
-
-
-
-// ===== DADOS DE JUNTAS POR FOLHA =====
-const FOLHAS = [{"mudanca": "2.1", "iso": "REG-IS-0028-P-6328", "folha": "1 de 15", "J": 19, "JC": 17, "comp_m": 84.8, "peso_kg": 2175.6, "spools": [{"spool": "SP 001", "diam": "6", "comp_m": 4.533, "peso_kg": 128.1, "J": 5, "JC": 1}, {"spool": "SP 002", "diam": "SUP", "comp_m": 2.407, "peso_kg": 0, "J": 8, "JC": 2}, {"spool": "SP 003", "diam": "3/4", "comp_m": 5.84, "peso_kg": 12.82, "J": 6, "JC": 2}, {"spool": "SP 004", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 005", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 006", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 007", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 008", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 009", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 010", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 011", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 012", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 013", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 014", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 015", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}], "desenhoId": "D1"}, {"mudanca": "2.1", "iso": "REG-IS-0028-P-6328", "folha": "2 de 15", "J": 14, "JC": 6, "comp_m": 21.4, "peso_kg": 551.1, "spools": [{"spool": "SP 016", "diam": "3/4", "comp_m": 2.091, "peso_kg": 4.59, "J": 6, "JC": 2}, {"spool": "SP 017", "diam": "6", "comp_m": 2.865, "peso_kg": 80.96, "J": 2, "JC": 1}, {"spool": "SP 018", "diam": "6", "comp_m": 6.8, "peso_kg": 192.17, "J": 1, "JC": 1}, {"spool": "SP 019", "diam": "6", "comp_m": 3.445, "peso_kg": 97.36, "J": 4, "JC": 1}, {"spool": "SP 020", "diam": "6", "comp_m": 6.229, "peso_kg": 176.03, "J": 1, "JC": 1}], "desenhoId": "D2"}, {"mudanca": "2.1", "iso": "REG-IS-0028-P-6328", "folha": "3 de 15", "J": 11, "JC": 8, "comp_m": 30.5, "peso_kg": 775.9, "spools": [{"spool": "SP 021", "diam": "3/4", "comp_m": 3.322, "peso_kg": 7.29, "J": 7, "JC": 2}, {"spool": "SP 022", "diam": "6", "comp_m": 3.197, "peso_kg": 90.35, "J": 4, "JC": 2}, {"spool": "SP 023", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 024", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 025", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 026", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}], "desenhoId": "D3"}, {"mudanca": "2.1", "iso": "REG-IS-0028-P-6328", "folha": "4 de 15", "J": 9, "JC": 6, "comp_m": 15.5, "peso_kg": 437.8, "spools": [{"spool": "SP 027", "diam": "6", "comp_m": 0.964, "peso_kg": 27.24, "J": 2, "JC": 1}, {"spool": "SP 028", "diam": "6", "comp_m": 6.08, "peso_kg": 171.82, "J": 0, "JC": 1}, {"spool": "SP 029", "diam": "6", "comp_m": 1.404, "peso_kg": 39.68, "J": 5, "JC": 2}, {"spool": "SP 030", "diam": "6", "comp_m": 6.08, "peso_kg": 171.82, "J": 0, "JC": 1}, {"spool": "SP 031", "diam": "6", "comp_m": 0.964, "peso_kg": 27.24, "J": 2, "JC": 1}], "desenhoId": "D4"}, {"mudanca": "2.1", "iso": "REG-IS-0028-P-6328", "folha": "5 de 15", "J": 12, "JC": 11, "comp_m": 33.9, "peso_kg": 929.3, "spools": [{"spool": "SP 032", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 033", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 034", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 035", "diam": "6", "comp_m": 3.0, "peso_kg": 84.78, "J": 0, "JC": 1}, {"spool": "SP 036", "diam": "6", "comp_m": 3.0, "peso_kg": 84.78, "J": 0, "JC": 1}, {"spool": "SP 037", "diam": "6", "comp_m": 3.0, "peso_kg": 84.78, "J": 0, "JC": 1}, {"spool": "SP 038", "diam": "6", "comp_m": 3.0, "peso_kg": 84.78, "J": 0, "JC": 1}, {"spool": "SP 039", "diam": "3/4", "comp_m": 1.132, "peso_kg": 2.48, "J": 5, "JC": 2}, {"spool": "SP 040", "diam": "6", "comp_m": 2.797, "peso_kg": 79.04, "J": 7, "JC": 2}], "desenhoId": "D5"}, {"mudanca": "2.1", "iso": "REG-IS-0028-P-6328", "folha": "6 de 15", "J": 14, "JC": 13, "comp_m": 55.2, "peso_kg": 1558.7, "spools": [{"spool": "SP 041", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 042", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 043", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 044", "diam": "6", "comp_m": 2.874, "peso_kg": 81.22, "J": 4, "JC": 2}, {"spool": "SP 045", "diam": "6", "comp_m": 2.604, "peso_kg": 73.59, "J": 5, "JC": 2}, {"spool": "SP 046", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 047", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 048", "diam": "6", "comp_m": 6.229, "peso_kg": 176.03, "J": 1, "JC": 1}, {"spool": "SP 049", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 050", "diam": "6", "comp_m": 3.725, "peso_kg": 105.27, "J": 1, "JC": 1}, {"spool": "SP 051", "diam": "6", "comp_m": 3.724, "peso_kg": 105.24, "J": 3, "JC": 1}], "desenhoId": "D6"}, {"mudanca": "2.1", "iso": "REG-IS-0028-P-6328", "folha": "7 de 15", "J": 8, "JC": 21, "comp_m": 122.8, "peso_kg": 3470.1, "spools": [{"spool": "SP 052", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 053", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 054", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 055", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 056", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 057", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 058", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 059", "diam": "6", "comp_m": 3.545, "peso_kg": 100.18, "J": 3, "JC": 1}, {"spool": "SP 060", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 061", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 062", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 063", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 064", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 065", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 066", "diam": "6", "comp_m": 5.017, "peso_kg": 141.78, "J": 5, "JC": 1}, {"spool": "SP 067", "diam": "6", "comp_m": 6.229, "peso_kg": 176.03, "J": 0, "JC": 1}, {"spool": "SP 068", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 069", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 070", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 071", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 072", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}], "desenhoId": "D7"}, {"mudanca": "2.1", "iso": "REG-IS-0028-P-6328", "folha": "8 de 15", "J": 13, "JC": 13, "comp_m": 61.4, "peso_kg": 1468.1, "spools": [{"spool": "SP 073", "diam": "3/4", "comp_m": 5.583, "peso_kg": 12.25, "J": 5, "JC": 2}, {"spool": "SP 074", "diam": "6", "comp_m": 3.152, "peso_kg": 89.08, "J": 2, "JC": 1}, {"spool": "SP 075", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 076", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 077", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 078", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 079", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 080", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 081", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 082", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 083", "diam": "3/4", "comp_m": 4.677, "peso_kg": 10.27, "J": 6, "JC": 2}], "desenhoId": "D8"}, {"mudanca": "2.1", "iso": "REG-IS-0028-P-6328", "folha": "9 de 15", "J": 11, "JC": 11, "comp_m": 48.9, "peso_kg": 1251.3, "spools": [{"spool": "SP 084", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 085", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 086", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 087", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 088", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 089", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 090", "diam": "3/4", "comp_m": 4.983, "peso_kg": 10.94, "J": 5, "JC": 2}, {"spool": "SP 091", "diam": "6", "comp_m": 5.338, "peso_kg": 150.85, "J": 1, "JC": 1}, {"spool": "SP 092", "diam": "6", "comp_m": 2.552, "peso_kg": 72.12, "J": 5, "JC": 2}], "desenhoId": "D9"}, {"mudanca": "2.1", "iso": "REG-IS-0028-P-6328", "folha": "10 de 15", "J": 9, "JC": 15, "comp_m": 82.0, "peso_kg": 2318.5, "spools": [{"spool": "SP 093", "diam": "6", "comp_m": 4.5, "peso_kg": 127.17, "J": 3, "JC": 0}, {"spool": "SP 094", "diam": "6", "comp_m": 2.793, "peso_kg": 78.93, "J": 4, "JC": 2}, {"spool": "SP 095", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 096", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 097", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 098", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 099", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 100", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 101", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 102", "diam": "6", "comp_m": 4.0, "peso_kg": 113.04, "J": 2, "JC": 1}, {"spool": "SP 103", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 104", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 105", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 106", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 107", "diam": "6", "comp_m": 4.749, "peso_kg": 134.21, "J": 0, "JC": 1}], "desenhoId": "D10"}, {"mudanca": "2.1", "iso": "REG-IS-0028-P-6328", "folha": "11 de 15", "J": 13, "JC": 13, "comp_m": 32.7, "peso_kg": 850.9, "spools": [{"spool": "SP 108", "diam": "6", "comp_m": 2.567, "peso_kg": 72.54, "J": 4, "JC": 2}, {"spool": "SP 109", "diam": "6", "comp_m": 2.358, "peso_kg": 66.64, "J": 1, "JC": 1}, {"spool": "SP 110", "diam": "6", "comp_m": 3.0, "peso_kg": 84.78, "J": 2, "JC": 1}, {"spool": "SP 111", "diam": "3/4", "comp_m": 2.849, "peso_kg": 6.25, "J": 3, "JC": 2}, {"spool": "SP 112", "diam": "6", "comp_m": 3.0, "peso_kg": 84.78, "J": 0, "JC": 1}, {"spool": "SP 113", "diam": "6", "comp_m": 3.0, "peso_kg": 84.78, "J": 0, "JC": 1}, {"spool": "SP 114", "diam": "6", "comp_m": 3.0, "peso_kg": 84.78, "J": 0, "JC": 1}, {"spool": "SP 115", "diam": "6", "comp_m": 3.0, "peso_kg": 84.78, "J": 0, "JC": 1}, {"spool": "SP 116", "diam": "6", "comp_m": 3.0, "peso_kg": 84.78, "J": 0, "JC": 1}, {"spool": "SP 117", "diam": "6", "comp_m": 3.0, "peso_kg": 84.78, "J": 0, "JC": 1}, {"spool": "SP 118", "diam": "6", "comp_m": 3.965, "peso_kg": 112.05, "J": 3, "JC": 1}], "desenhoId": "D11"}, {"mudanca": "2.1", "iso": "REG-IS-0028-P-6328", "folha": "12 de 15", "J": 8, "JC": 11, "comp_m": 51.7, "peso_kg": 1343.8, "spools": [{"spool": "SP 119", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 120", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 121", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 122", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 123", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 124", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 125", "diam": "6", "comp_m": 5.202, "peso_kg": 147.01, "J": 3, "JC": 1}, {"spool": "SP 126", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 127", "diam": "6", "comp_m": 0.0, "peso_kg": 0, "J": 0, "JC": 1}, {"spool": "SP 128", "diam": "6", "comp_m": 0.0, "peso_kg": 0, "J": 0, "JC": 1}, {"spool": "SP 129", "diam": "3/4", "comp_m": 4.497, "peso_kg": 9.87, "J": 5, "JC": 1}], "desenhoId": "D12"}, {"mudanca": "2.1", "iso": "REG-IS-0028-P-6328", "folha": "13 de 15", "J": 7, "JC": 12, "comp_m": 51.1, "peso_kg": 1443.9, "spools": [{"spool": "SP 130", "diam": "6", "comp_m": 2.757, "peso_kg": 77.91, "J": 1, "JC": 1}, {"spool": "SP 131", "diam": "6", "comp_m": 4.501, "peso_kg": 127.2, "J": 0, "JC": 1}, {"spool": "SP 132", "diam": "6", "comp_m": 1.8, "peso_kg": 50.87, "J": 2, "JC": 1}, {"spool": "SP 133", "diam": "6", "comp_m": 2.899, "peso_kg": 81.93, "J": 1, "JC": 2}, {"spool": "SP 134", "diam": "6", "comp_m": 5.139, "peso_kg": 145.23, "J": 0, "JC": 1}, {"spool": "SP 135", "diam": "6", "comp_m": 4.5, "peso_kg": 127.17, "J": 0, "JC": 1}, {"spool": "SP 136", "diam": "6", "comp_m": 5.499, "peso_kg": 155.4, "J": 3, "JC": 1}, {"spool": "SP 137", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 138", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 139", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 140", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}], "desenhoId": "D13"}, {"mudanca": "4.1", "iso": "REG-IS-0028-P-6335", "folha": "2 de 14", "J": 2, "JC": 12, "comp_m": 47.0, "peso_kg": 1328.2, "spools": [{"spool": "SP 001", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 002", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 003", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 1, "JC": 2}, {"spool": "SP 004", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 005", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 006", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 007", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 008", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 1, "JC": 2}, {"spool": "SP 009", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 010", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}], "desenhoId": "D14"}, {"mudanca": "4.1", "iso": "REG-IS-0028-P-6335", "folha": "3 de 14", "J": 1, "JC": 16, "comp_m": 70.5, "peso_kg": 1992.3, "spools": [{"spool": "SP 011", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 012", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 013", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 014", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 015", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 1, "JC": 2}, {"spool": "SP 016", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 017", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 018", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 019", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 020", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 021", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 022", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 023", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 024", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 025", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}], "desenhoId": "D15"}, {"mudanca": "4.1", "iso": "REG-IS-0028-P-6335", "folha": "4 de 14", "J": 2, "JC": 19, "comp_m": 62.9, "peso_kg": 1777.5, "spools": [{"spool": "SP 026", "diam": "6", "comp_m": 3.7, "peso_kg": 104.56, "J": 0, "JC": 1}, {"spool": "SP 027", "diam": "6", "comp_m": 3.7, "peso_kg": 104.56, "J": 0, "JC": 1}, {"spool": "SP 028", "diam": "6", "comp_m": 3.7, "peso_kg": 104.56, "J": 0, "JC": 1}, {"spool": "SP 029", "diam": "6", "comp_m": 3.7, "peso_kg": 104.56, "J": 1, "JC": 2}, {"spool": "SP 030", "diam": "6", "comp_m": 3.7, "peso_kg": 104.56, "J": 0, "JC": 1}, {"spool": "SP 031", "diam": "6", "comp_m": 3.7, "peso_kg": 104.56, "J": 0, "JC": 1}, {"spool": "SP 032", "diam": "6", "comp_m": 3.7, "peso_kg": 104.56, "J": 0, "JC": 1}, {"spool": "SP 033", "diam": "6", "comp_m": 3.7, "peso_kg": 104.56, "J": 0, "JC": 1}, {"spool": "SP 034", "diam": "6", "comp_m": 3.7, "peso_kg": 104.56, "J": 0, "JC": 1}, {"spool": "SP 035", "diam": "6", "comp_m": 3.7, "peso_kg": 104.56, "J": 0, "JC": 1}, {"spool": "SP 036", "diam": "6", "comp_m": 3.7, "peso_kg": 104.56, "J": 0, "JC": 1}, {"spool": "SP 037", "diam": "6", "comp_m": 3.7, "peso_kg": 104.56, "J": 1, "JC": 2}, {"spool": "SP 038", "diam": "6", "comp_m": 3.7, "peso_kg": 104.56, "J": 0, "JC": 1}, {"spool": "SP 039", "diam": "6", "comp_m": 3.7, "peso_kg": 104.56, "J": 0, "JC": 1}, {"spool": "SP 040", "diam": "6", "comp_m": 3.7, "peso_kg": 104.56, "J": 0, "JC": 1}, {"spool": "SP 041", "diam": "6", "comp_m": 3.7, "peso_kg": 104.56, "J": 0, "JC": 1}, {"spool": "SP 042", "diam": "6", "comp_m": 3.7, "peso_kg": 104.56, "J": 0, "JC": 1}], "desenhoId": "D16"}, {"mudanca": "4.1", "iso": "REG-IS-0028-P-6335", "folha": "5 de 14", "J": 2, "JC": 12, "comp_m": 55.0, "peso_kg": 1554.3, "spools": [{"spool": "SP 043", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 044", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 045", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 1, "JC": 2}, {"spool": "SP 046", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 047", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 048", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 049", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 050", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 1, "JC": 2}, {"spool": "SP 051", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 052", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}], "desenhoId": "D17"}, {"mudanca": "4.1", "iso": "REG-IS-0028-P-6335", "folha": "6 de 14", "J": 2, "JC": 21, "comp_m": 95.0, "peso_kg": 2684.7, "spools": [{"spool": "SP 053", "diam": "6", "comp_m": 5.0, "peso_kg": 141.3, "J": 0, "JC": 1}, {"spool": "SP 054", "diam": "6", "comp_m": 5.0, "peso_kg": 141.3, "J": 0, "JC": 1}, {"spool": "SP 055", "diam": "6", "comp_m": 5.0, "peso_kg": 141.3, "J": 0, "JC": 1}, {"spool": "SP 056", "diam": "6", "comp_m": 5.0, "peso_kg": 141.3, "J": 0, "JC": 1}, {"spool": "SP 057", "diam": "6", "comp_m": 5.0, "peso_kg": 141.3, "J": 0, "JC": 1}, {"spool": "SP 058", "diam": "6", "comp_m": 5.0, "peso_kg": 141.3, "J": 1, "JC": 2}, {"spool": "SP 059", "diam": "6", "comp_m": 5.0, "peso_kg": 141.3, "J": 0, "JC": 1}, {"spool": "SP 060", "diam": "6", "comp_m": 5.0, "peso_kg": 141.3, "J": 0, "JC": 1}, {"spool": "SP 061", "diam": "6", "comp_m": 5.0, "peso_kg": 141.3, "J": 0, "JC": 1}, {"spool": "SP 062", "diam": "6", "comp_m": 5.0, "peso_kg": 141.3, "J": 0, "JC": 1}, {"spool": "SP 063", "diam": "6", "comp_m": 5.0, "peso_kg": 141.3, "J": 0, "JC": 1}, {"spool": "SP 064", "diam": "6", "comp_m": 5.0, "peso_kg": 141.3, "J": 0, "JC": 1}, {"spool": "SP 065", "diam": "6", "comp_m": 5.0, "peso_kg": 141.3, "J": 0, "JC": 1}, {"spool": "SP 066", "diam": "6", "comp_m": 5.0, "peso_kg": 141.3, "J": 1, "JC": 2}, {"spool": "SP 067", "diam": "6", "comp_m": 5.0, "peso_kg": 141.3, "J": 0, "JC": 1}, {"spool": "SP 068", "diam": "6", "comp_m": 5.0, "peso_kg": 141.3, "J": 0, "JC": 1}, {"spool": "SP 069", "diam": "6", "comp_m": 5.0, "peso_kg": 141.3, "J": 0, "JC": 1}, {"spool": "SP 070", "diam": "6", "comp_m": 5.0, "peso_kg": 141.3, "J": 0, "JC": 1}, {"spool": "SP 071", "diam": "6", "comp_m": 5.0, "peso_kg": 141.3, "J": 0, "JC": 1}], "desenhoId": "D18"}, {"mudanca": "4.1", "iso": "REG-IS-0028-P-6335", "folha": "7 de 14", "J": 1, "JC": 16, "comp_m": 82.5, "peso_kg": 2331.5, "spools": [{"spool": "SP 072", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 073", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 074", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 075", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 076", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 077", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 078", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 1, "JC": 2}, {"spool": "SP 079", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 080", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 081", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 082", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 083", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 084", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 085", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 086", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}], "desenhoId": "D19"}, {"mudanca": "4.1", "iso": "REG-IS-0028-P-6335", "folha": "8 de 14", "J": 2, "JC": 21, "comp_m": 98.8, "peso_kg": 2792.0, "spools": [{"spool": "SP 087", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 088", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 089", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 090", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 091", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 1, "JC": 2}, {"spool": "SP 092", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 093", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 094", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 095", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 096", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 097", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 098", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 099", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 100", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 1, "JC": 2}, {"spool": "SP 101", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 102", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 103", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 104", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 105", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}], "desenhoId": "D20"}, {"mudanca": "4.1", "iso": "REG-IS-0028-P-6335", "folha": "9 de 14", "J": 3, "JC": 15, "comp_m": 39.6, "peso_kg": 1119.1, "spools": [{"spool": "SP 106", "diam": "6", "comp_m": 3.3, "peso_kg": 93.26, "J": 0, "JC": 1}, {"spool": "SP 107", "diam": "6", "comp_m": 3.3, "peso_kg": 93.26, "J": 0, "JC": 1}, {"spool": "SP 108", "diam": "6", "comp_m": 3.3, "peso_kg": 93.26, "J": 1, "JC": 2}, {"spool": "SP 109", "diam": "6", "comp_m": 3.3, "peso_kg": 93.26, "J": 0, "JC": 1}, {"spool": "SP 110", "diam": "6", "comp_m": 3.3, "peso_kg": 93.26, "J": 0, "JC": 1}, {"spool": "SP 111", "diam": "6", "comp_m": 3.3, "peso_kg": 93.26, "J": 0, "JC": 1}, {"spool": "SP 112", "diam": "6", "comp_m": 3.3, "peso_kg": 93.26, "J": 1, "JC": 2}, {"spool": "SP 113", "diam": "6", "comp_m": 3.3, "peso_kg": 93.26, "J": 0, "JC": 1}, {"spool": "SP 114", "diam": "6", "comp_m": 3.3, "peso_kg": 93.26, "J": 0, "JC": 1}, {"spool": "SP 115", "diam": "6", "comp_m": 3.3, "peso_kg": 93.26, "J": 1, "JC": 2}, {"spool": "SP 116", "diam": "6", "comp_m": 3.3, "peso_kg": 93.26, "J": 0, "JC": 1}, {"spool": "SP 117", "diam": "6", "comp_m": 3.3, "peso_kg": 93.26, "J": 0, "JC": 1}], "desenhoId": "D21"}, {"mudanca": "4.1", "iso": "REG-IS-0028-P-6335", "folha": "10 de 14", "J": 2, "JC": 15, "comp_m": 49.4, "peso_kg": 1396.1, "spools": [{"spool": "SP 118", "diam": "6", "comp_m": 3.8, "peso_kg": 107.39, "J": 0, "JC": 1}, {"spool": "SP 119", "diam": "6", "comp_m": 3.8, "peso_kg": 107.39, "J": 0, "JC": 1}, {"spool": "SP 120", "diam": "6", "comp_m": 3.8, "peso_kg": 107.39, "J": 0, "JC": 1}, {"spool": "SP 121", "diam": "6", "comp_m": 3.8, "peso_kg": 107.39, "J": 1, "JC": 2}, {"spool": "SP 122", "diam": "6", "comp_m": 3.8, "peso_kg": 107.39, "J": 0, "JC": 1}, {"spool": "SP 123", "diam": "6", "comp_m": 3.8, "peso_kg": 107.39, "J": 0, "JC": 1}, {"spool": "SP 124", "diam": "6", "comp_m": 3.8, "peso_kg": 107.39, "J": 0, "JC": 1}, {"spool": "SP 125", "diam": "6", "comp_m": 3.8, "peso_kg": 107.39, "J": 0, "JC": 1}, {"spool": "SP 126", "diam": "6", "comp_m": 3.8, "peso_kg": 107.39, "J": 0, "JC": 1}, {"spool": "SP 127", "diam": "6", "comp_m": 3.8, "peso_kg": 107.39, "J": 1, "JC": 2}, {"spool": "SP 128", "diam": "6", "comp_m": 3.8, "peso_kg": 107.39, "J": 0, "JC": 1}, {"spool": "SP 129", "diam": "6", "comp_m": 3.8, "peso_kg": 107.39, "J": 0, "JC": 1}, {"spool": "SP 130", "diam": "6", "comp_m": 3.8, "peso_kg": 107.39, "J": 0, "JC": 1}], "desenhoId": "D22"}, {"mudanca": "4.1", "iso": "REG-IS-0028-P-6335", "folha": "11 de 14", "J": 1, "JC": 16, "comp_m": 78.0, "peso_kg": 2204.2, "spools": [{"spool": "SP 131", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 132", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 133", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 134", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 135", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 136", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 137", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 138", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 1, "JC": 2}, {"spool": "SP 139", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 140", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 141", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 142", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 143", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 144", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 145", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}], "desenhoId": "D23"}];
-
-// ===== INICIALIZAR TELA JUNTAS =====
-(function(){
-  const tot21J=148, tot21JC=157, tot41J=18, tot41JC=163;
-  const totJ=tot21J+tot41J, totJC=tot21JC+tot41JC, tot=totJ+totJC;
-  document.getElementById('jt-total').textContent = tot.toLocaleString('pt-BR');
-  document.getElementById('jt-J').textContent = totJ.toLocaleString('pt-BR');
-  document.getElementById('jt-JC').textContent = totJC.toLocaleString('pt-BR');
-  document.getElementById('jt-J-pct').textContent = (totJ/tot*100).toFixed(1).replace('.',',')+'% do total';
-  document.getElementById('jt-JC-pct').textContent = (totJC/tot*100).toFixed(1).replace('.',',')+'% do total';
-
-  const tbody = document.getElementById('tbl-juntas-body');
-  let rows='';
-  FOLHAS.forEach(f=>{
-    const total=f.J+f.JC, pct=total?((f.JC/total)*100).toFixed(1):'0.0';
-    const cls = f.mudanca==='2.1'?'badge-m m21':'badge-m m41';
-    rows+=`<tr>
-      <td><span class="${cls}">${f.mudanca}</span></td>
-      <td style="font-size:11px;color:var(--cinza3)">${f.iso}</td>
-      <td>${f.folha}</td>
-      <td style="text-align:right;">${f.J.toLocaleString('pt-BR')}</td>
-      <td style="text-align:right;">${f.JC.toLocaleString('pt-BR')}</td>
-      <td style="text-align:right;font-weight:700;">${total.toLocaleString('pt-BR')}</td>
-      <td style="text-align:right;color:var(--laranja);font-weight:600;">${pct.replace('.',',')}%</td>
-    </tr>`;
-  });
-  tbody.innerHTML=rows;
-
-  const labels=FOLHAS.map(f=>f.mudanca+'/F'+f.folha.split(' ')[0]);
-  new Chart(document.getElementById('chart-juntas-folhas'),{
-    type:'bar',
-    data:{
-      labels,
-      datasets:[
-        {label:'J — Pipe Shop',data:FOLHAS.map(f=>f.J),backgroundColor:'rgba(27,58,107,.8)',borderRadius:3},
-        {label:'JC — Campo',data:FOLHAS.map(f=>f.JC),backgroundColor:'rgba(244,121,32,.8)',borderRadius:3}
-      ]
-    },
-    options:{
-      responsive:true,
-      plugins:{legend:{position:'bottom'}},
-      scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,ticks:{callback:v=>v.toLocaleString('pt-BR')}}}
-    }
-  });
-
-  new Chart(document.getElementById('chart-juntas-21'),{
-    type:'doughnut',
-    data:{labels:['J — Pipe Shop','JC — Campo'],datasets:[{data:[tot21J,tot21JC],backgroundColor:['rgba(27,58,107,.8)','rgba(244,121,32,.8)'],borderWidth:2}]},
-    options:{responsive:true,plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>c.label+': '+c.raw.toLocaleString('pt-BR')}}}}
-  });
-  new Chart(document.getElementById('chart-juntas-41'),{
-    type:'doughnut',
-    data:{labels:['J — Pipe Shop','JC — Campo'],datasets:[{data:[tot41J,tot41JC],backgroundColor:['rgba(27,58,107,.8)','rgba(244,121,32,.8)'],borderWidth:2}]},
-    options:{responsive:true,plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>c.label+': '+c.raw.toLocaleString('pt-BR')}}}}
-  });
-})();
-
-// ===== LISTA DE MATERIAIS =====
-
-// ===== LISTA DE MATERIAIS =====
-let _matMud = '';       // mudança selecionada: '', '2.1', '4.1'
-let _matFolha = null;   // objeto FOLHAS selecionado
-
-function matSelecionarMud(mud){
-  _matMud = mud;
-  _matFolha = null;
-  document.getElementById('mat-detalhe').style.display = 'none';
-  ['mc-all','mc-21','mc-41'].forEach(id=>document.getElementById(id).classList.remove('active'));
-  document.getElementById(mud===''?'mc-all':mud==='2.1'?'mc-21':'mc-41').classList.add('active');
-  matRenderFolhas();
-}
-
-function matRenderFolhas(){
-  const grid  = document.getElementById('mat-folhas-grid');
-  const label = document.getElementById('mat-folhas-label');
-  const lista = _matMud ? FOLHAS.filter(f=>f.mudanca===_matMud) : FOLHAS;
-  label.textContent = lista.length + ' desenho(s) disponível(is) — clique para ver a lista de materiais';
-
-  grid.innerHTML = lista.map((f,i)=>{
-    const cls      = f.mudanca==='2.1' ? 'm21' : 'm41';
-    const isActive = (_matFolha && _matFolha===f) ? ' active' : '';
-    return `<div class="folha-card${isActive}" data-idx="${i}">
-      <div class="fc-iso"><span class="badge-m ${cls}">${f.mudanca}</span> ${f.iso}</div>
-      <div class="fc-folha">Folha ${f.folha}</div>
-      <div class="fc-stats">
-        <span><b>${f.spools.length}</b>spools</span>
-        <span><b>${f.J}</b>J</span>
-        <span><b>${f.JC}</b>JC</span>
-        <span><b>${f.comp_m.toFixed(0)}m</b>comp</span>
-      </div>
-    </div>`;
-  }).join('');
-
-  // Usar event listeners em vez de onclick inline
-  grid.querySelectorAll('.folha-card').forEach((el, i)=>{
-    el.addEventListener('click', ()=> matAbrirFolha(lista[i]));
-  });
-}
-
-function matAbrirFolha(folhaObj){
-  _matFolha = folhaObj;
-
-  // Destacar card ativo
-  document.querySelectorAll('#mat-folhas-grid .folha-card').forEach(el=>el.classList.remove('active'));
-  const lista = _matMud ? FOLHAS.filter(f=>f.mudanca===_matMud) : FOLHAS;
-  const idx = lista.indexOf(folhaObj);
-  const cards = document.querySelectorAll('#mat-folhas-grid .folha-card');
-  if(cards[idx]) cards[idx].classList.add('active');
-
-  const f = folhaObj;
-
-  // Preencher KPIs
-  document.getElementById('mat-iso').textContent         = f.iso;
-  document.getElementById('mat-folha-label').textContent = 'Folha ' + f.folha;
-  document.getElementById('mat-n-spools').textContent    = f.spools.length;
-  document.getElementById('mat-J').textContent           = f.J.toLocaleString('pt-BR');
-  document.getElementById('mat-JC').textContent          = f.JC.toLocaleString('pt-BR');
-  document.getElementById('mat-comp').textContent        = f.comp_m.toFixed(1).replace('.',',') + ' m';
-  document.getElementById('mat-peso').textContent        = (f.peso_kg||0).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}) + ' kg';
-  document.getElementById('mat-card-title').textContent  = 'Spools — ' + f.iso + ' / Folha ' + f.folha;
-  document.getElementById('mat-card-sub').textContent    = f.spools.length + ' spools · J=' + f.J + ' · JC=' + f.JC;
-
-  // Preencher tabela
-  let rows = '';
-  f.spools.forEach(s=>{
-    const tot  = s.J + s.JC;
-    const tipo = s.JC >= s.J ? '<span class="badge-m m41">Campo</span>' : '<span class="badge-m m21">Pipe Shop</span>';
-    const dn   = s.diam==='3/4' ? '3/4"' : (s.diam==='6' ? '6"' : (s.diam||'—'));
-    const comp = s.comp_m ? s.comp_m.toFixed(3).replace('.',',') : '—';
-    const peso = s.peso_kg ? s.peso_kg.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}) : '—';
-    rows += '<tr>'
-      + '<td style="font-weight:700;">' + s.spool + '</td>'
-      + '<td>' + dn + '</td>'
-      + '<td style="text-align:right;">' + comp + '</td>'
-      + '<td style="text-align:right;">' + peso + '</td>'
-      + '<td style="text-align:right;">' + (s.J||'—') + '</td>'
-      + '<td style="text-align:right;">' + (s.JC||'—') + '</td>'
-      + '<td style="text-align:right;font-weight:700;">' + tot + '</td>'
-      + '<td>' + tipo + '</td>'
-      + '</tr>';
-  });
-  document.getElementById('mat-tbody').innerHTML = rows;
-
-  // Mostrar painel e rolar até ele
-  const detalhe = document.getElementById('mat-detalhe');
-  detalhe.style.display = 'block';
-  requestAnimationFrame(function(){
-    detalhe.scrollIntoView({behavior:'smooth', block:'start'});
-  });
-}
-
-
-</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 :root{
   --azul:#27306A;--azul2:#2B75E4;--azul3:#5B8FE8;--azul-claro:#EEF3FC;
@@ -502,6 +230,7 @@ tbody tr:nth-child(even):hover{background:var(--azul-claro);}
 .folha-card .fc-stats b{font-size:14px;font-weight:700;color:var(--texto);}
 
 </style>
+</head>
 </head>
 <body>
 
@@ -1461,4 +1190,277 @@ tbody tr:nth-child(even):hover{background:var(--azul-claro);}
   </div>
   <div id="mat-conteudo"></div>
 </div>
+<script>
+// Donut spools
+new Chart(document.getElementById('chart-donut'),{
+  type:'doughnut',
+  data:{
+    labels:['Mudança 2.1','Mudança 4.1'],
+    datasets:[{data:[140,145],backgroundColor:[COR_AZUL,COR_LAR],borderWidth:0,hoverOffset:8}]
+  },
+  options:{responsive:true,cutout:'65%',
+    plugins:{legend:{position:'bottom',labels:{padding:16,font:{size:12}}},
+             tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.raw} spools (${(ctx.raw/285*100).toFixed(1)}%)`}}}}
+});
 
+// Peso por mudança
+new Chart(document.getElementById('chart-peso-mud'),{
+  type:'bar',
+  data:{
+    labels:['Mudança 2.1','Mudança 4.1'],
+    datasets:[{label:'Peso (kg)',data:[18578,19181],backgroundColor:[COR_AZUL,COR_LAR],borderRadius:8,borderSkipped:false}]
+  },
+  options:{...opts(),plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{callback:v=>`${(v/1000).toFixed(0)}t`}}}}
+});
+
+// Comprimento por isométrico (todas folhas)
+const folhas21 = D.mud21.folhas;
+const folhas41 = D.mud41.folhas;
+const allFolhas = [...folhas21.map(f=>({...f,mud:'2.1'})),...folhas41.map(f=>({...f,mud:'4.1'}))];
+new Chart(document.getElementById('chart-comp-iso'),{
+  type:'bar',
+  data:{
+    labels:allFolhas.map(f=>`P-${f.mud==='2.1'?'6328':'6335'} ${f.folha}`),
+    datasets:[{
+      label:'Comprimento (m)',
+      data:allFolhas.map(f=>f.comp),
+      backgroundColor:allFolhas.map(f=>f.mud==='2.1'?COR_AZUL:COR_LAR),
+      borderRadius:4
+    }]
+  },
+  options:{...opts(),plugins:{legend:{display:false}},
+    scales:{x:{ticks:{font:{size:9},maxRotation:45}},y:{ticks:{callback:v=>v+'m'}}}}
+});
+
+
+// Radar comparativo
+new Chart(document.getElementById('chart-radar'),{
+  type:'radar',
+  data:{
+    labels:['Spools','Comprimento (×10m)','Peso (×500kg)','Folhas ISO','Revisão'],
+    datasets:[
+      {label:'Mudança 2.1',data:[140,69.2,37.2,13,2],backgroundColor:'rgba(27,58,107,.15)',borderColor:COR_AZUL,pointBackgroundColor:COR_AZUL,borderWidth:2},
+      {label:'Mudança 4.1',data:[145,67.9,38.4,10,1],backgroundColor:'rgba(244,121,32,.15)',borderColor:COR_LAR,pointBackgroundColor:COR_LAR,borderWidth:2}
+    ]
+  },
+  options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:12}}}},
+    scales:{r:{beginAtZero:true,ticks:{display:false},grid:{color:'#E2E8F0'},pointLabels:{font:{size:11}}}}}
+});
+
+// ===== MUD 2.1 charts =====
+new Chart(document.getElementById('chart-21-folha-n'),{
+  type:'bar',
+  data:{labels:D.mud21.folhas.map(f=>f.folha),
+    datasets:[{label:'Spools',data:D.mud21.folhas.map(f=>f.n),backgroundColor:COR_AZUL,borderRadius:6}]
+  },
+  options:{...opts(),plugins:{legend:{display:false}}}
+});
+new Chart(document.getElementById('chart-21-folha-peso'),{
+  type:'bar',
+  data:{labels:D.mud21.folhas.map(f=>f.folha),
+    datasets:[{label:'Peso (kg)',data:D.mud21.folhas.map(f=>f.peso),backgroundColor:COR_LAR,borderRadius:6}]
+  },
+  options:{...opts(),plugins:{legend:{display:false}},
+    scales:{y:{ticks:{callback:v=>`${(v/1000).toFixed(1)}t`}}}}
+});
+// Acumulado 2.1
+const acum21=[];let sum21=0;D.mud21.folhas.forEach(f=>{sum21+=f.comp;acum21.push(+sum21.toFixed(1));});
+new Chart(document.getElementById('chart-21-acum'),{
+  type:'line',
+  data:{labels:D.mud21.folhas.map(f=>f.folha),
+    datasets:[
+      {label:'Acumulado (m)',data:acum21,borderColor:COR_AZUL,backgroundColor:'rgba(27,58,107,.1)',fill:true,tension:.4,pointRadius:5,pointBackgroundColor:COR_AZUL},
+      {label:'Por Folha (m)',data:D.mud21.folhas.map(f=>f.comp),borderColor:COR_LAR,backgroundColor:'transparent',tension:.4,pointRadius:4,pointBackgroundColor:COR_LAR,borderDash:[5,4]}
+    ]
+  },
+  options:{responsive:true,plugins:{legend:{position:'bottom'}},
+    scales:{y:{beginAtZero:true,ticks:{callback:v=>v+'m'}},x:{grid:{display:false}}}}
+});
+
+// ===== MUD 4.1 charts =====
+new Chart(document.getElementById('chart-41-folha-n'),{
+  type:'bar',
+  data:{labels:D.mud41.folhas.map(f=>f.folha),
+    datasets:[{label:'Spools',data:D.mud41.folhas.map(f=>f.n),backgroundColor:COR_LAR,borderRadius:6}]
+  },
+  options:{...opts(),plugins:{legend:{display:false}}}
+});
+new Chart(document.getElementById('chart-41-folha-peso'),{
+  type:'bar',
+  data:{labels:D.mud41.folhas.map(f=>f.folha),
+    datasets:[{label:'Peso (kg)',data:D.mud41.folhas.map(f=>f.peso),backgroundColor:COR_AZUL,borderRadius:6}]
+  },
+  options:{...opts(),plugins:{legend:{display:false}},
+    scales:{y:{ticks:{callback:v=>`${(v/1000).toFixed(1)}t`}}}}
+});
+const acum41=[];let sum41=0;D.mud41.folhas.forEach(f=>{sum41+=f.comp;acum41.push(+sum41.toFixed(1));});
+new Chart(document.getElementById('chart-41-acum'),{
+  type:'line',
+  data:{labels:D.mud41.folhas.map(f=>f.folha),
+    datasets:[
+      {label:'Acumulado (m)',data:acum41,borderColor:COR_LAR,backgroundColor:'rgba(244,121,32,.1)',fill:true,tension:.4,pointRadius:5,pointBackgroundColor:COR_LAR},
+      {label:'Por Folha (m)',data:D.mud41.folhas.map(f=>f.comp),borderColor:COR_AZUL,backgroundColor:'transparent',tension:.4,pointRadius:4,pointBackgroundColor:COR_AZUL,borderDash:[5,4]}
+    ]
+  },
+  options:{responsive:true,plugins:{legend:{position:'bottom'}},
+    scales:{y:{beginAtZero:true,ticks:{callback:v=>v+'m'}},x:{grid:{display:false}}}}
+});
+
+
+
+// ===== DADOS DE JUNTAS POR FOLHA =====
+const FOLHAS = [{"mudanca": "2.1", "iso": "REG-IS-0028-P-6328", "folha": "1 de 15", "J": 19, "JC": 17, "comp_m": 84.8, "peso_kg": 2175.6, "spools": [{"spool": "SP 001", "diam": "6", "comp_m": 4.533, "peso_kg": 128.1, "J": 5, "JC": 1}, {"spool": "SP 002", "diam": "SUP", "comp_m": 2.407, "peso_kg": 0, "J": 8, "JC": 2}, {"spool": "SP 003", "diam": "3/4", "comp_m": 5.84, "peso_kg": 12.82, "J": 6, "JC": 2}, {"spool": "SP 004", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 005", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 006", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 007", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 008", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 009", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 010", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 011", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 012", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 013", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 014", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 015", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}], "desenhoId": "D1"}, {"mudanca": "2.1", "iso": "REG-IS-0028-P-6328", "folha": "2 de 15", "J": 14, "JC": 6, "comp_m": 21.4, "peso_kg": 551.1, "spools": [{"spool": "SP 016", "diam": "3/4", "comp_m": 2.091, "peso_kg": 4.59, "J": 6, "JC": 2}, {"spool": "SP 017", "diam": "6", "comp_m": 2.865, "peso_kg": 80.96, "J": 2, "JC": 1}, {"spool": "SP 018", "diam": "6", "comp_m": 6.8, "peso_kg": 192.17, "J": 1, "JC": 1}, {"spool": "SP 019", "diam": "6", "comp_m": 3.445, "peso_kg": 97.36, "J": 4, "JC": 1}, {"spool": "SP 020", "diam": "6", "comp_m": 6.229, "peso_kg": 176.03, "J": 1, "JC": 1}], "desenhoId": "D2"}, {"mudanca": "2.1", "iso": "REG-IS-0028-P-6328", "folha": "3 de 15", "J": 11, "JC": 8, "comp_m": 30.5, "peso_kg": 775.9, "spools": [{"spool": "SP 021", "diam": "3/4", "comp_m": 3.322, "peso_kg": 7.29, "J": 7, "JC": 2}, {"spool": "SP 022", "diam": "6", "comp_m": 3.197, "peso_kg": 90.35, "J": 4, "JC": 2}, {"spool": "SP 023", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 024", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 025", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 026", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}], "desenhoId": "D3"}, {"mudanca": "2.1", "iso": "REG-IS-0028-P-6328", "folha": "4 de 15", "J": 9, "JC": 6, "comp_m": 15.5, "peso_kg": 437.8, "spools": [{"spool": "SP 027", "diam": "6", "comp_m": 0.964, "peso_kg": 27.24, "J": 2, "JC": 1}, {"spool": "SP 028", "diam": "6", "comp_m": 6.08, "peso_kg": 171.82, "J": 0, "JC": 1}, {"spool": "SP 029", "diam": "6", "comp_m": 1.404, "peso_kg": 39.68, "J": 5, "JC": 2}, {"spool": "SP 030", "diam": "6", "comp_m": 6.08, "peso_kg": 171.82, "J": 0, "JC": 1}, {"spool": "SP 031", "diam": "6", "comp_m": 0.964, "peso_kg": 27.24, "J": 2, "JC": 1}], "desenhoId": "D4"}, {"mudanca": "2.1", "iso": "REG-IS-0028-P-6328", "folha": "5 de 15", "J": 12, "JC": 11, "comp_m": 33.9, "peso_kg": 929.3, "spools": [{"spool": "SP 032", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 033", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 034", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 035", "diam": "6", "comp_m": 3.0, "peso_kg": 84.78, "J": 0, "JC": 1}, {"spool": "SP 036", "diam": "6", "comp_m": 3.0, "peso_kg": 84.78, "J": 0, "JC": 1}, {"spool": "SP 037", "diam": "6", "comp_m": 3.0, "peso_kg": 84.78, "J": 0, "JC": 1}, {"spool": "SP 038", "diam": "6", "comp_m": 3.0, "peso_kg": 84.78, "J": 0, "JC": 1}, {"spool": "SP 039", "diam": "3/4", "comp_m": 1.132, "peso_kg": 2.48, "J": 5, "JC": 2}, {"spool": "SP 040", "diam": "6", "comp_m": 2.797, "peso_kg": 79.04, "J": 7, "JC": 2}], "desenhoId": "D5"}, {"mudanca": "2.1", "iso": "REG-IS-0028-P-6328", "folha": "6 de 15", "J": 14, "JC": 13, "comp_m": 55.2, "peso_kg": 1558.7, "spools": [{"spool": "SP 041", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 042", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 043", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 044", "diam": "6", "comp_m": 2.874, "peso_kg": 81.22, "J": 4, "JC": 2}, {"spool": "SP 045", "diam": "6", "comp_m": 2.604, "peso_kg": 73.59, "J": 5, "JC": 2}, {"spool": "SP 046", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 047", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 048", "diam": "6", "comp_m": 6.229, "peso_kg": 176.03, "J": 1, "JC": 1}, {"spool": "SP 049", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 050", "diam": "6", "comp_m": 3.725, "peso_kg": 105.27, "J": 1, "JC": 1}, {"spool": "SP 051", "diam": "6", "comp_m": 3.724, "peso_kg": 105.24, "J": 3, "JC": 1}], "desenhoId": "D6"}, {"mudanca": "2.1", "iso": "REG-IS-0028-P-6328", "folha": "7 de 15", "J": 8, "JC": 21, "comp_m": 122.8, "peso_kg": 3470.1, "spools": [{"spool": "SP 052", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 053", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 054", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 055", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 056", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 057", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 058", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 059", "diam": "6", "comp_m": 3.545, "peso_kg": 100.18, "J": 3, "JC": 1}, {"spool": "SP 060", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 061", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 062", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 063", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 064", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 065", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 066", "diam": "6", "comp_m": 5.017, "peso_kg": 141.78, "J": 5, "JC": 1}, {"spool": "SP 067", "diam": "6", "comp_m": 6.229, "peso_kg": 176.03, "J": 0, "JC": 1}, {"spool": "SP 068", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 069", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 070", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 071", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 072", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}], "desenhoId": "D7"}, {"mudanca": "2.1", "iso": "REG-IS-0028-P-6328", "folha": "8 de 15", "J": 13, "JC": 13, "comp_m": 61.4, "peso_kg": 1468.1, "spools": [{"spool": "SP 073", "diam": "3/4", "comp_m": 5.583, "peso_kg": 12.25, "J": 5, "JC": 2}, {"spool": "SP 074", "diam": "6", "comp_m": 3.152, "peso_kg": 89.08, "J": 2, "JC": 1}, {"spool": "SP 075", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 076", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 077", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 078", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 079", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 080", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 081", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 082", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 083", "diam": "3/4", "comp_m": 4.677, "peso_kg": 10.27, "J": 6, "JC": 2}], "desenhoId": "D8"}, {"mudanca": "2.1", "iso": "REG-IS-0028-P-6328", "folha": "9 de 15", "J": 11, "JC": 11, "comp_m": 48.9, "peso_kg": 1251.3, "spools": [{"spool": "SP 084", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 085", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 086", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 087", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 088", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 089", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 090", "diam": "3/4", "comp_m": 4.983, "peso_kg": 10.94, "J": 5, "JC": 2}, {"spool": "SP 091", "diam": "6", "comp_m": 5.338, "peso_kg": 150.85, "J": 1, "JC": 1}, {"spool": "SP 092", "diam": "6", "comp_m": 2.552, "peso_kg": 72.12, "J": 5, "JC": 2}], "desenhoId": "D9"}, {"mudanca": "2.1", "iso": "REG-IS-0028-P-6328", "folha": "10 de 15", "J": 9, "JC": 15, "comp_m": 82.0, "peso_kg": 2318.5, "spools": [{"spool": "SP 093", "diam": "6", "comp_m": 4.5, "peso_kg": 127.17, "J": 3, "JC": 0}, {"spool": "SP 094", "diam": "6", "comp_m": 2.793, "peso_kg": 78.93, "J": 4, "JC": 2}, {"spool": "SP 095", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 096", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 097", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 098", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 099", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 100", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 101", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 102", "diam": "6", "comp_m": 4.0, "peso_kg": 113.04, "J": 2, "JC": 1}, {"spool": "SP 103", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 104", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 105", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 106", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 107", "diam": "6", "comp_m": 4.749, "peso_kg": 134.21, "J": 0, "JC": 1}], "desenhoId": "D10"}, {"mudanca": "2.1", "iso": "REG-IS-0028-P-6328", "folha": "11 de 15", "J": 13, "JC": 13, "comp_m": 32.7, "peso_kg": 850.9, "spools": [{"spool": "SP 108", "diam": "6", "comp_m": 2.567, "peso_kg": 72.54, "J": 4, "JC": 2}, {"spool": "SP 109", "diam": "6", "comp_m": 2.358, "peso_kg": 66.64, "J": 1, "JC": 1}, {"spool": "SP 110", "diam": "6", "comp_m": 3.0, "peso_kg": 84.78, "J": 2, "JC": 1}, {"spool": "SP 111", "diam": "3/4", "comp_m": 2.849, "peso_kg": 6.25, "J": 3, "JC": 2}, {"spool": "SP 112", "diam": "6", "comp_m": 3.0, "peso_kg": 84.78, "J": 0, "JC": 1}, {"spool": "SP 113", "diam": "6", "comp_m": 3.0, "peso_kg": 84.78, "J": 0, "JC": 1}, {"spool": "SP 114", "diam": "6", "comp_m": 3.0, "peso_kg": 84.78, "J": 0, "JC": 1}, {"spool": "SP 115", "diam": "6", "comp_m": 3.0, "peso_kg": 84.78, "J": 0, "JC": 1}, {"spool": "SP 116", "diam": "6", "comp_m": 3.0, "peso_kg": 84.78, "J": 0, "JC": 1}, {"spool": "SP 117", "diam": "6", "comp_m": 3.0, "peso_kg": 84.78, "J": 0, "JC": 1}, {"spool": "SP 118", "diam": "6", "comp_m": 3.965, "peso_kg": 112.05, "J": 3, "JC": 1}], "desenhoId": "D11"}, {"mudanca": "2.1", "iso": "REG-IS-0028-P-6328", "folha": "12 de 15", "J": 8, "JC": 11, "comp_m": 51.7, "peso_kg": 1343.8, "spools": [{"spool": "SP 119", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 120", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 121", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 122", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 123", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 124", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 125", "diam": "6", "comp_m": 5.202, "peso_kg": 147.01, "J": 3, "JC": 1}, {"spool": "SP 126", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 127", "diam": "6", "comp_m": 0.0, "peso_kg": 0, "J": 0, "JC": 1}, {"spool": "SP 128", "diam": "6", "comp_m": 0.0, "peso_kg": 0, "J": 0, "JC": 1}, {"spool": "SP 129", "diam": "3/4", "comp_m": 4.497, "peso_kg": 9.87, "J": 5, "JC": 1}], "desenhoId": "D12"}, {"mudanca": "2.1", "iso": "REG-IS-0028-P-6328", "folha": "13 de 15", "J": 7, "JC": 12, "comp_m": 51.1, "peso_kg": 1443.9, "spools": [{"spool": "SP 130", "diam": "6", "comp_m": 2.757, "peso_kg": 77.91, "J": 1, "JC": 1}, {"spool": "SP 131", "diam": "6", "comp_m": 4.501, "peso_kg": 127.2, "J": 0, "JC": 1}, {"spool": "SP 132", "diam": "6", "comp_m": 1.8, "peso_kg": 50.87, "J": 2, "JC": 1}, {"spool": "SP 133", "diam": "6", "comp_m": 2.899, "peso_kg": 81.93, "J": 1, "JC": 2}, {"spool": "SP 134", "diam": "6", "comp_m": 5.139, "peso_kg": 145.23, "J": 0, "JC": 1}, {"spool": "SP 135", "diam": "6", "comp_m": 4.5, "peso_kg": 127.17, "J": 0, "JC": 1}, {"spool": "SP 136", "diam": "6", "comp_m": 5.499, "peso_kg": 155.4, "J": 3, "JC": 1}, {"spool": "SP 137", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 138", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 139", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}, {"spool": "SP 140", "diam": "6", "comp_m": 6.0, "peso_kg": 169.56, "J": 0, "JC": 1}], "desenhoId": "D13"}, {"mudanca": "4.1", "iso": "REG-IS-0028-P-6335", "folha": "2 de 14", "J": 2, "JC": 12, "comp_m": 47.0, "peso_kg": 1328.2, "spools": [{"spool": "SP 001", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 002", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 003", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 1, "JC": 2}, {"spool": "SP 004", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 005", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 006", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 007", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 008", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 1, "JC": 2}, {"spool": "SP 009", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 010", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}], "desenhoId": "D14"}, {"mudanca": "4.1", "iso": "REG-IS-0028-P-6335", "folha": "3 de 14", "J": 1, "JC": 16, "comp_m": 70.5, "peso_kg": 1992.3, "spools": [{"spool": "SP 011", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 012", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 013", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 014", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 015", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 1, "JC": 2}, {"spool": "SP 016", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 017", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 018", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 019", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 020", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 021", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 022", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 023", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 024", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}, {"spool": "SP 025", "diam": "6", "comp_m": 4.7, "peso_kg": 132.82, "J": 0, "JC": 1}], "desenhoId": "D15"}, {"mudanca": "4.1", "iso": "REG-IS-0028-P-6335", "folha": "4 de 14", "J": 2, "JC": 19, "comp_m": 62.9, "peso_kg": 1777.5, "spools": [{"spool": "SP 026", "diam": "6", "comp_m": 3.7, "peso_kg": 104.56, "J": 0, "JC": 1}, {"spool": "SP 027", "diam": "6", "comp_m": 3.7, "peso_kg": 104.56, "J": 0, "JC": 1}, {"spool": "SP 028", "diam": "6", "comp_m": 3.7, "peso_kg": 104.56, "J": 0, "JC": 1}, {"spool": "SP 029", "diam": "6", "comp_m": 3.7, "peso_kg": 104.56, "J": 1, "JC": 2}, {"spool": "SP 030", "diam": "6", "comp_m": 3.7, "peso_kg": 104.56, "J": 0, "JC": 1}, {"spool": "SP 031", "diam": "6", "comp_m": 3.7, "peso_kg": 104.56, "J": 0, "JC": 1}, {"spool": "SP 032", "diam": "6", "comp_m": 3.7, "peso_kg": 104.56, "J": 0, "JC": 1}, {"spool": "SP 033", "diam": "6", "comp_m": 3.7, "peso_kg": 104.56, "J": 0, "JC": 1}, {"spool": "SP 034", "diam": "6", "comp_m": 3.7, "peso_kg": 104.56, "J": 0, "JC": 1}, {"spool": "SP 035", "diam": "6", "comp_m": 3.7, "peso_kg": 104.56, "J": 0, "JC": 1}, {"spool": "SP 036", "diam": "6", "comp_m": 3.7, "peso_kg": 104.56, "J": 0, "JC": 1}, {"spool": "SP 037", "diam": "6", "comp_m": 3.7, "peso_kg": 104.56, "J": 1, "JC": 2}, {"spool": "SP 038", "diam": "6", "comp_m": 3.7, "peso_kg": 104.56, "J": 0, "JC": 1}, {"spool": "SP 039", "diam": "6", "comp_m": 3.7, "peso_kg": 104.56, "J": 0, "JC": 1}, {"spool": "SP 040", "diam": "6", "comp_m": 3.7, "peso_kg": 104.56, "J": 0, "JC": 1}, {"spool": "SP 041", "diam": "6", "comp_m": 3.7, "peso_kg": 104.56, "J": 0, "JC": 1}, {"spool": "SP 042", "diam": "6", "comp_m": 3.7, "peso_kg": 104.56, "J": 0, "JC": 1}], "desenhoId": "D16"}, {"mudanca": "4.1", "iso": "REG-IS-0028-P-6335", "folha": "5 de 14", "J": 2, "JC": 12, "comp_m": 55.0, "peso_kg": 1554.3, "spools": [{"spool": "SP 043", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 044", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 045", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 1, "JC": 2}, {"spool": "SP 046", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 047", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 048", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 049", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 050", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 1, "JC": 2}, {"spool": "SP 051", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 052", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}], "desenhoId": "D17"}, {"mudanca": "4.1", "iso": "REG-IS-0028-P-6335", "folha": "6 de 14", "J": 2, "JC": 21, "comp_m": 95.0, "peso_kg": 2684.7, "spools": [{"spool": "SP 053", "diam": "6", "comp_m": 5.0, "peso_kg": 141.3, "J": 0, "JC": 1}, {"spool": "SP 054", "diam": "6", "comp_m": 5.0, "peso_kg": 141.3, "J": 0, "JC": 1}, {"spool": "SP 055", "diam": "6", "comp_m": 5.0, "peso_kg": 141.3, "J": 0, "JC": 1}, {"spool": "SP 056", "diam": "6", "comp_m": 5.0, "peso_kg": 141.3, "J": 0, "JC": 1}, {"spool": "SP 057", "diam": "6", "comp_m": 5.0, "peso_kg": 141.3, "J": 0, "JC": 1}, {"spool": "SP 058", "diam": "6", "comp_m": 5.0, "peso_kg": 141.3, "J": 1, "JC": 2}, {"spool": "SP 059", "diam": "6", "comp_m": 5.0, "peso_kg": 141.3, "J": 0, "JC": 1}, {"spool": "SP 060", "diam": "6", "comp_m": 5.0, "peso_kg": 141.3, "J": 0, "JC": 1}, {"spool": "SP 061", "diam": "6", "comp_m": 5.0, "peso_kg": 141.3, "J": 0, "JC": 1}, {"spool": "SP 062", "diam": "6", "comp_m": 5.0, "peso_kg": 141.3, "J": 0, "JC": 1}, {"spool": "SP 063", "diam": "6", "comp_m": 5.0, "peso_kg": 141.3, "J": 0, "JC": 1}, {"spool": "SP 064", "diam": "6", "comp_m": 5.0, "peso_kg": 141.3, "J": 0, "JC": 1}, {"spool": "SP 065", "diam": "6", "comp_m": 5.0, "peso_kg": 141.3, "J": 0, "JC": 1}, {"spool": "SP 066", "diam": "6", "comp_m": 5.0, "peso_kg": 141.3, "J": 1, "JC": 2}, {"spool": "SP 067", "diam": "6", "comp_m": 5.0, "peso_kg": 141.3, "J": 0, "JC": 1}, {"spool": "SP 068", "diam": "6", "comp_m": 5.0, "peso_kg": 141.3, "J": 0, "JC": 1}, {"spool": "SP 069", "diam": "6", "comp_m": 5.0, "peso_kg": 141.3, "J": 0, "JC": 1}, {"spool": "SP 070", "diam": "6", "comp_m": 5.0, "peso_kg": 141.3, "J": 0, "JC": 1}, {"spool": "SP 071", "diam": "6", "comp_m": 5.0, "peso_kg": 141.3, "J": 0, "JC": 1}], "desenhoId": "D18"}, {"mudanca": "4.1", "iso": "REG-IS-0028-P-6335", "folha": "7 de 14", "J": 1, "JC": 16, "comp_m": 82.5, "peso_kg": 2331.5, "spools": [{"spool": "SP 072", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 073", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 074", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 075", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 076", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 077", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 078", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 1, "JC": 2}, {"spool": "SP 079", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 080", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 081", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 082", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 083", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 084", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 085", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}, {"spool": "SP 086", "diam": "6", "comp_m": 5.5, "peso_kg": 155.43, "J": 0, "JC": 1}], "desenhoId": "D19"}, {"mudanca": "4.1", "iso": "REG-IS-0028-P-6335", "folha": "8 de 14", "J": 2, "JC": 21, "comp_m": 98.8, "peso_kg": 2792.0, "spools": [{"spool": "SP 087", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 088", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 089", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 090", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 091", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 1, "JC": 2}, {"spool": "SP 092", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 093", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 094", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 095", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 096", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 097", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 098", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 099", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 100", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 1, "JC": 2}, {"spool": "SP 101", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 102", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 103", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 104", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 105", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}], "desenhoId": "D20"}, {"mudanca": "4.1", "iso": "REG-IS-0028-P-6335", "folha": "9 de 14", "J": 3, "JC": 15, "comp_m": 39.6, "peso_kg": 1119.1, "spools": [{"spool": "SP 106", "diam": "6", "comp_m": 3.3, "peso_kg": 93.26, "J": 0, "JC": 1}, {"spool": "SP 107", "diam": "6", "comp_m": 3.3, "peso_kg": 93.26, "J": 0, "JC": 1}, {"spool": "SP 108", "diam": "6", "comp_m": 3.3, "peso_kg": 93.26, "J": 1, "JC": 2}, {"spool": "SP 109", "diam": "6", "comp_m": 3.3, "peso_kg": 93.26, "J": 0, "JC": 1}, {"spool": "SP 110", "diam": "6", "comp_m": 3.3, "peso_kg": 93.26, "J": 0, "JC": 1}, {"spool": "SP 111", "diam": "6", "comp_m": 3.3, "peso_kg": 93.26, "J": 0, "JC": 1}, {"spool": "SP 112", "diam": "6", "comp_m": 3.3, "peso_kg": 93.26, "J": 1, "JC": 2}, {"spool": "SP 113", "diam": "6", "comp_m": 3.3, "peso_kg": 93.26, "J": 0, "JC": 1}, {"spool": "SP 114", "diam": "6", "comp_m": 3.3, "peso_kg": 93.26, "J": 0, "JC": 1}, {"spool": "SP 115", "diam": "6", "comp_m": 3.3, "peso_kg": 93.26, "J": 1, "JC": 2}, {"spool": "SP 116", "diam": "6", "comp_m": 3.3, "peso_kg": 93.26, "J": 0, "JC": 1}, {"spool": "SP 117", "diam": "6", "comp_m": 3.3, "peso_kg": 93.26, "J": 0, "JC": 1}], "desenhoId": "D21"}, {"mudanca": "4.1", "iso": "REG-IS-0028-P-6335", "folha": "10 de 14", "J": 2, "JC": 15, "comp_m": 49.4, "peso_kg": 1396.1, "spools": [{"spool": "SP 118", "diam": "6", "comp_m": 3.8, "peso_kg": 107.39, "J": 0, "JC": 1}, {"spool": "SP 119", "diam": "6", "comp_m": 3.8, "peso_kg": 107.39, "J": 0, "JC": 1}, {"spool": "SP 120", "diam": "6", "comp_m": 3.8, "peso_kg": 107.39, "J": 0, "JC": 1}, {"spool": "SP 121", "diam": "6", "comp_m": 3.8, "peso_kg": 107.39, "J": 1, "JC": 2}, {"spool": "SP 122", "diam": "6", "comp_m": 3.8, "peso_kg": 107.39, "J": 0, "JC": 1}, {"spool": "SP 123", "diam": "6", "comp_m": 3.8, "peso_kg": 107.39, "J": 0, "JC": 1}, {"spool": "SP 124", "diam": "6", "comp_m": 3.8, "peso_kg": 107.39, "J": 0, "JC": 1}, {"spool": "SP 125", "diam": "6", "comp_m": 3.8, "peso_kg": 107.39, "J": 0, "JC": 1}, {"spool": "SP 126", "diam": "6", "comp_m": 3.8, "peso_kg": 107.39, "J": 0, "JC": 1}, {"spool": "SP 127", "diam": "6", "comp_m": 3.8, "peso_kg": 107.39, "J": 1, "JC": 2}, {"spool": "SP 128", "diam": "6", "comp_m": 3.8, "peso_kg": 107.39, "J": 0, "JC": 1}, {"spool": "SP 129", "diam": "6", "comp_m": 3.8, "peso_kg": 107.39, "J": 0, "JC": 1}, {"spool": "SP 130", "diam": "6", "comp_m": 3.8, "peso_kg": 107.39, "J": 0, "JC": 1}], "desenhoId": "D22"}, {"mudanca": "4.1", "iso": "REG-IS-0028-P-6335", "folha": "11 de 14", "J": 1, "JC": 16, "comp_m": 78.0, "peso_kg": 2204.2, "spools": [{"spool": "SP 131", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 132", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 133", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 134", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 135", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 136", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 137", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 138", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 1, "JC": 2}, {"spool": "SP 139", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 140", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 141", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 142", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 143", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 144", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}, {"spool": "SP 145", "diam": "6", "comp_m": 5.2, "peso_kg": 146.95, "J": 0, "JC": 1}], "desenhoId": "D23"}];
+
+// ===== INICIALIZAR TELA JUNTAS =====
+(function(){
+  const tot21J=148, tot21JC=157, tot41J=18, tot41JC=163;
+  const totJ=tot21J+tot41J, totJC=tot21JC+tot41JC, tot=totJ+totJC;
+  document.getElementById('jt-total').textContent = tot.toLocaleString('pt-BR');
+  document.getElementById('jt-J').textContent = totJ.toLocaleString('pt-BR');
+  document.getElementById('jt-JC').textContent = totJC.toLocaleString('pt-BR');
+  document.getElementById('jt-J-pct').textContent = (totJ/tot*100).toFixed(1).replace('.',',')+'% do total';
+  document.getElementById('jt-JC-pct').textContent = (totJC/tot*100).toFixed(1).replace('.',',')+'% do total';
+
+  const tbody = document.getElementById('tbl-juntas-body');
+  let rows='';
+  FOLHAS.forEach(f=>{
+    const total=f.J+f.JC, pct=total?((f.JC/total)*100).toFixed(1):'0.0';
+    const cls = f.mudanca==='2.1'?'badge-m m21':'badge-m m41';
+    rows+=`<tr>
+      <td><span class="${cls}">${f.mudanca}</span></td>
+      <td style="font-size:11px;color:var(--cinza3)">${f.iso}</td>
+      <td>${f.folha}</td>
+      <td style="text-align:right;">${f.J.toLocaleString('pt-BR')}</td>
+      <td style="text-align:right;">${f.JC.toLocaleString('pt-BR')}</td>
+      <td style="text-align:right;font-weight:700;">${total.toLocaleString('pt-BR')}</td>
+      <td style="text-align:right;color:var(--laranja);font-weight:600;">${pct.replace('.',',')}%</td>
+    </tr>`;
+  });
+  tbody.innerHTML=rows;
+
+  const labels=FOLHAS.map(f=>f.mudanca+'/F'+f.folha.split(' ')[0]);
+  new Chart(document.getElementById('chart-juntas-folhas'),{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[
+        {label:'J — Pipe Shop',data:FOLHAS.map(f=>f.J),backgroundColor:'rgba(27,58,107,.8)',borderRadius:3},
+        {label:'JC — Campo',data:FOLHAS.map(f=>f.JC),backgroundColor:'rgba(244,121,32,.8)',borderRadius:3}
+      ]
+    },
+    options:{
+      responsive:true,
+      plugins:{legend:{position:'bottom'}},
+      scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,ticks:{callback:v=>v.toLocaleString('pt-BR')}}}
+    }
+  });
+
+  new Chart(document.getElementById('chart-juntas-21'),{
+    type:'doughnut',
+    data:{labels:['J — Pipe Shop','JC — Campo'],datasets:[{data:[tot21J,tot21JC],backgroundColor:['rgba(27,58,107,.8)','rgba(244,121,32,.8)'],borderWidth:2}]},
+    options:{responsive:true,plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>c.label+': '+c.raw.toLocaleString('pt-BR')}}}}
+  });
+  new Chart(document.getElementById('chart-juntas-41'),{
+    type:'doughnut',
+    data:{labels:['J — Pipe Shop','JC — Campo'],datasets:[{data:[tot41J,tot41JC],backgroundColor:['rgba(27,58,107,.8)','rgba(244,121,32,.8)'],borderWidth:2}]},
+    options:{responsive:true,plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>c.label+': '+c.raw.toLocaleString('pt-BR')}}}}
+  });
+})();
+
+// ===== LISTA DE MATERIAIS =====
+
+// ===== LISTA DE MATERIAIS =====
+let _matMud = '';       // mudança selecionada: '', '2.1', '4.1'
+let _matFolha = null;   // objeto FOLHAS selecionado
+
+function matSelecionarMud(mud){
+  _matMud = mud;
+  _matFolha = null;
+  document.getElementById('mat-detalhe').style.display = 'none';
+  ['mc-all','mc-21','mc-41'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  document.getElementById(mud===''?'mc-all':mud==='2.1'?'mc-21':'mc-41').classList.add('active');
+  matRenderFolhas();
+}
+
+function matRenderFolhas(){
+  const grid  = document.getElementById('mat-folhas-grid');
+  const label = document.getElementById('mat-folhas-label');
+  const lista = _matMud ? FOLHAS.filter(f=>f.mudanca===_matMud) : FOLHAS;
+  label.textContent = lista.length + ' desenho(s) disponível(is) — clique para ver a lista de materiais';
+
+  grid.innerHTML = lista.map((f,i)=>{
+    const cls      = f.mudanca==='2.1' ? 'm21' : 'm41';
+    const isActive = (_matFolha && _matFolha===f) ? ' active' : '';
+    return `<div class="folha-card${isActive}" data-idx="${i}">
+      <div class="fc-iso"><span class="badge-m ${cls}">${f.mudanca}</span> ${f.iso}</div>
+      <div class="fc-folha">Folha ${f.folha}</div>
+      <div class="fc-stats">
+        <span><b>${f.spools.length}</b>spools</span>
+        <span><b>${f.J}</b>J</span>
+        <span><b>${f.JC}</b>JC</span>
+        <span><b>${f.comp_m.toFixed(0)}m</b>comp</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Usar event listeners em vez de onclick inline
+  grid.querySelectorAll('.folha-card').forEach((el, i)=>{
+    el.addEventListener('click', ()=> matAbrirFolha(lista[i]));
+  });
+}
+
+function matAbrirFolha(folhaObj){
+  _matFolha = folhaObj;
+
+  // Destacar card ativo
+  document.querySelectorAll('#mat-folhas-grid .folha-card').forEach(el=>el.classList.remove('active'));
+  const lista = _matMud ? FOLHAS.filter(f=>f.mudanca===_matMud) : FOLHAS;
+  const idx = lista.indexOf(folhaObj);
+  const cards = document.querySelectorAll('#mat-folhas-grid .folha-card');
+  if(cards[idx]) cards[idx].classList.add('active');
+
+  const f = folhaObj;
+
+  // Preencher KPIs
+  document.getElementById('mat-iso').textContent         = f.iso;
+  document.getElementById('mat-folha-label').textContent = 'Folha ' + f.folha;
+  document.getElementById('mat-n-spools').textContent    = f.spools.length;
+  document.getElementById('mat-J').textContent           = f.J.toLocaleString('pt-BR');
+  document.getElementById('mat-JC').textContent          = f.JC.toLocaleString('pt-BR');
+  document.getElementById('mat-comp').textContent        = f.comp_m.toFixed(1).replace('.',',') + ' m';
+  document.getElementById('mat-peso').textContent        = (f.peso_kg||0).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}) + ' kg';
+  document.getElementById('mat-card-title').textContent  = 'Spools — ' + f.iso + ' / Folha ' + f.folha;
+  document.getElementById('mat-card-sub').textContent    = f.spools.length + ' spools · J=' + f.J + ' · JC=' + f.JC;
+
+  // Preencher tabela
+  let rows = '';
+  f.spools.forEach(s=>{
+    const tot  = s.J + s.JC;
+    const tipo = s.JC >= s.J ? '<span class="badge-m m41">Campo</span>' : '<span class="badge-m m21">Pipe Shop</span>';
+    const dn   = s.diam==='3/4' ? '3/4"' : (s.diam==='6' ? '6"' : (s.diam||'—'));
+    const comp = s.comp_m ? s.comp_m.toFixed(3).replace('.',',') : '—';
+    const peso = s.peso_kg ? s.peso_kg.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}) : '—';
+    rows += '<tr>'
+      + '<td style="font-weight:700;">' + s.spool + '</td>'
+      + '<td>' + dn + '</td>'
+      + '<td style="text-align:right;">' + comp + '</td>'
+      + '<td style="text-align:right;">' + peso + '</td>'
+      + '<td style="text-align:right;">' + (s.J||'—') + '</td>'
+      + '<td style="text-align:right;">' + (s.JC||'—') + '</td>'
+      + '<td style="text-align:right;font-weight:700;">' + tot + '</td>'
+      + '<td>' + tipo + '</td>'
+      + '</tr>';
+  });
+  document.getElementById('mat-tbody').innerHTML = rows;
+
+  // Mostrar painel e rolar até ele
+  const detalhe = document.getElementById('mat-detalhe');
+  detalhe.style.display = 'block';
+  requestAnimationFrame(function(){
+    detalhe.scrollIntoView({behavior:'smooth', block:'start'});
+  });
+}
+</script>
+
+</body>
+</html>
