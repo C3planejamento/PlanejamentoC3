@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Spooletagem — REGAP | C3 Engenharia</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --azul:#1B3A6B;--azul2:#2E6DA4;--azul3:#4A90C4;--azul-claro:#E8F0FA;
+  --laranja:#F47920;--laranja2:#FF9A45;--laranja-claro:#FFF4EC;
+  --cinza:#F4F6FA;--cinza2:#E2E8F0;--cinza3:#94A3B8;
+  --texto:#1E293B;--branco:#fff;
+  --sidebar:240px;
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif;}
+body{display:flex;min-height:100vh;background:var(--cinza);color:var(--texto);}
+
+/* ===== SIDEBAR ===== */
+#sidebar{
+  width:var(--sidebar);min-height:100vh;background:var(--azul);
+  display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100;
+}
+.logo-area{
+  padding:20px 16px 16px;border-bottom:1px solid rgba(255,255,255,.12);
+}
+.logo-c3{
+  display:flex;align-items:center;gap:10px;margin-bottom:8px;
+}
+.logo-c3 .nome{color:#fff;font-size:13px;font-weight:700;line-height:1.3;}
+.logo-c3 .nome span{display:block;font-size:10px;font-weight:400;color:rgba(255,255,255,.6);}
+.contrato-tag{
+  background:rgba(255,255,255,.1);border-radius:4px;padding:4px 8px;
+  font-size:10px;color:rgba(255,255,255,.8);letter-spacing:.5px;
+}
+
+nav{flex:1;padding:12px 0;overflow-y:auto;}
+.nav-section{padding:8px 16px 4px;font-size:10px;color:rgba(255,255,255,.4);
+  letter-spacing:1px;text-transform:uppercase;margin-top:4px;}
+.nav-item{
+  display:flex;align-items:center;gap:10px;padding:10px 16px;
+  color:rgba(255,255,255,.75);cursor:pointer;transition:.2s;
+  font-size:13px;border-left:3px solid transparent;user-select:none;
+}
+.nav-item:hover{background:rgba(255,255,255,.08);color:#fff;}
+.nav-item.active{background:rgba(244,121,32,.15);color:var(--laranja2);
+  border-left-color:var(--laranja);}
+.nav-item .ico{width:18px;text-align:center;font-size:15px;}
+.nav-sub{
+  display:flex;align-items:center;gap:10px;padding:8px 16px 8px 42px;
+  color:rgba(255,255,255,.6);cursor:pointer;transition:.2s;font-size:12px;
+  border-left:3px solid transparent;
+}
+.nav-sub:hover{background:rgba(255,255,255,.06);color:#fff;}
+.nav-sub.active{color:var(--laranja2);border-left-color:var(--laranja);}
+
+.sidebar-footer{
+  padding:12px 16px;border-top:1px solid rgba(255,255,255,.1);
+  font-size:10px;color:rgba(255,255,255,.4);text-align:center;
+}
+
+/* ===== MAIN ===== */
+#main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;min-height:100vh;}
+
+/* Header */
+.topbar{
+  background:var(--branco);border-bottom:1px solid var(--cinza2);
+  padding:14px 28px;display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:50;
+}
+.topbar-title{font-size:16px;font-weight:700;color:var(--azul);}
+.topbar-sub{font-size:12px;color:var(--cinza3);margin-top:2px;}
+.badge{
+  background:var(--laranja-claro);color:var(--laranja);border:1px solid var(--laranja2);
+  border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;
+}
+
+/* Content */
+.content{padding:24px 28px;flex:1;}
+
+/* ===== SCREENS ===== */
+.screen{display:none;}
+.screen.active{display:block;}
+
+/* KPI Cards */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px;}
+.kpi{
+  background:var(--branco);border-radius:12px;padding:18px 20px;
+  border:1px solid var(--cinza2);position:relative;overflow:hidden;
+}
+.kpi::before{
+  content:'';position:absolute;top:0;right:0;width:4px;height:100%;
+  background:var(--laranja);border-radius:0 12px 12px 0;
+}
+.kpi.azul::before{background:var(--azul2);}
+.kpi.verde::before{background:#22C55E;}
+.kpi.roxo::before{background:#8B5CF6;}
+.kpi-label{font-size:11px;color:var(--cinza3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.kpi-val{font-size:26px;font-weight:800;color:var(--azul);line-height:1;}
+.kpi-unit{font-size:12px;color:var(--cinza3);margin-left:3px;font-weight:400;}
+.kpi-sub{font-size:11px;color:var(--cinza3);margin-top:6px;}
+
+/* Cards em linha */
+.cards-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
+.cards-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px;}
+@media(max-width:900px){.cards-row,.cards-row-3{grid-template-columns:1fr;}}
+
+/* Card genérico */
+.card{
+  background:var(--branco);border-radius:12px;border:1px solid var(--cinza2);
+  padding:20px;
+}
+.card-title{
+  font-size:13px;font-weight:700;color:var(--azul);margin-bottom:4px;
+  display:flex;align-items:center;gap:8px;
+}
+.card-sub{font-size:11px;color:var(--cinza3);margin-bottom:16px;}
+.card canvas{max-height:260px;}
+
+/* Mudança chip */
+.chip{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;
+  background:var(--azul-claro);color:var(--azul2);
+}
+.chip.laranja{background:var(--laranja-claro);color:var(--laranja);}
+
+/* Info grid */
+.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px;}
+.info-item{background:var(--cinza);border-radius:8px;padding:12px 14px;}
+.info-item .lbl{font-size:10px;color:var(--cinza3);text-transform:uppercase;letter-spacing:.5px;}
+.info-item .val{font-size:14px;font-weight:700;color:var(--azul);margin-top:3px;}
+
+/* Tabela spools */
+.tbl-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--cinza2);}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead th{
+  background:var(--azul);color:#fff;padding:10px 12px;text-align:left;
+  font-weight:600;font-size:11px;letter-spacing:.3px;
+  position:sticky;top:0;
+}
+tbody tr{border-bottom:1px solid var(--cinza2);}
+tbody tr:hover{background:var(--azul-claro);}
+tbody td{padding:9px 12px;color:var(--texto);}
+tbody tr:nth-child(even){background:#FAFBFD;}
+tbody tr:nth-child(even):hover{background:var(--azul-claro);}
+.badge-m{
+  display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;
+}
+.badge-m.m21{background:#DBEAFE;color:#1D4ED8;}
+.badge-m.m41{background:#FEF3C7;color:#D97706;}
+
+/* Filtros */
+.filtros{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
+.filtros input,.filtros select{
+  padding:8px 12px;border:1px solid var(--cinza2);border-radius:8px;
+  font-size:12px;outline:none;background:var(--branco);color:var(--texto);
+}
+.filtros input:focus,.filtros select:focus{border-color:var(--azul3);}
+.btn{
+  padding:8px 16px;border-radius:8px;border:none;cursor:pointer;
+  font-size:12px;font-weight:600;transition:.2s;
+}
+.btn-primary{background:var(--azul);color:#fff;}
+.btn-primary:hover{background:var(--azul2);}
+.btn-orange{background:var(--laranja);color:#fff;}
+.btn-orange:hover{background:var(--laranja2);}
+
+/* Progress bar */
+.prog-bar{height:8px;background:var(--cinza2);border-radius:4px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:4px;transition:.6s;}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:2px solid var(--cinza2);padding-bottom:0;}
+.tab{
+  padding:9px 18px;font-size:13px;font-weight:600;color:var(--cinza3);
+  cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:.2s;
+}
+.tab:hover{color:var(--azul);}
+.tab.active{color:var(--azul);border-bottom-color:var(--laranja);}
+
+/* Stat row */
+.stat-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--cinza2);}
+.stat-row:last-child{border:none;}
+.stat-row .nome{flex:1;font-size:12px;color:var(--texto);}
+.stat-row .qtd{font-size:13px;font-weight:700;color:var(--azul);min-width:35px;text-align:right;}
+.stat-row .bar{flex:2;}
+
+/* Header mudança */
+.mud-header{
+  background:linear-gradient(135deg,var(--azul) 0%,var(--azul2) 100%);
+  border-radius:12px;padding:20px 24px;margin-bottom:20px;color:#fff;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.mud-header h2{font-size:18px;font-weight:800;}
+.mud-header p{font-size:12px;opacity:.8;margin-top:4px;}
+.mud-header .tag{
+  background:rgba(244,121,32,.3);border:1px solid var(--laranja);
+  color:#fff;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside id="sidebar">
+  <div class="logo-area">
+    <div class="logo-c3">
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAaQAAACMCAYAAAAzxN3aAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAABuoSURBVHhe7d0H2CxnWcZxmhBCEaQYAakC0kLvIEhvigKhd0SQHpqEIp3QCb1JCR2kSk2QqtIJ0jsEQXoz9JZ4/8N5dHh99p3Z8+23887MfV/X7zrJO7vfmd093zw7M285zjHHHGNmZja6tNHMzGzb0kYzM7NtSxvNzMy2LW00MzPbtrTRzMxs29JGMzOzbUsbzczMti1tNDMz27a0cWZOIZeU28mj5UnyfHmhvFRevue/nyOHyCPklrK/nFSyn2nj2U+uKPeUx8uz5FB5sbxCXikvkWfLY+WBcl05q2Q/z8wakTbOAAXoCfJJ2WneJxQyfmb2d9nu+n25sVBwviY7yQ/kzXJHOYtkf5+ZjSRtnKCTy83ltfJT2a18W/j2fYDsI9m+2M6dU+4h75fdzOeFs6hLSLYfZrZFaeNEcEntvvIhGSO/lHfKXYUDaLaPNtxV5enyORkj35NXyY3k1JLto5ntorSxUSeSqwn3C74oreXLwgH16pLtv/2uM8qt5DD5tbSWj8hD5DyS7b+ZbVja2BCu8x8oXPf/lUwlXDZ8k9xGTifZa1uii8vD5QiZUrh3xReha8gJJHttZrZDaePILi10SOCMYy75tDxULiLZa54rejheT+j99n2ZQ34ih8td5EySvW4z2wtp45adRm4iXL+fy0Grlm8JPcboiryvZO/JlJ1D7i30TlxCPiv0wrysZO+HmQ2UNm7BBeR+MlaHhFZytHxA7iZTHifDfTPG/dBrbcmhWzk9PfmC5TFsZmtKG3cBHRKuJQxA/aY4eT4jTxYGfmbvYyu4L8b9sTfKlO7tbTt82ThI3DHCbIC0cUPOLHeWd0iLvahaD/cq3iIc+E8r2Xu8TReVg2UTg42XmK8IHSPoKZq9v2aLlzbuAB0SHiV803c2GwoBHSMuLNl7v2kMNr6hcL/rO+JsNq+ROwjd37P332xx0sY1XV/eIEeJs518Q+gEcm3JPpO9dTKhQ8J7xZfithc6RjBjxMUk+1zMFiFtHIhvz4xud8YNxWkT95weKc74+Rc5sWSfkdmspY0DPEyctsIURtlnNcTUBqrOPT+Ts0v2WZnNVtrY49bitJkrSPaZ1TCjhNNefiz0Ts0+M7NZSht7/EacNkOX+uwzW4XxQ067YcaS7HMzm6W0scJnR+3nSpJ9dpm3itNumBMx+9zMZiltrGBgq9N2nijZZ5dxz8j2w/iv7LMzm520seJt4rQdxg1ln12JlVid9vOXkn1+ZrOTNlbQJdVpO5zFZp9dibnWnPaz6bFmZs1KGytckNqPC9K84jMkW4y0scIFqf24IM0rLki2GGljhQtS+xlakJgmyGk/Lki2GGljhQtS+3FBmldckGwx0sYKF6T244I0r7gg2WKkjRUuSO3HBWlecUGyxUgbK1yQ2o8L0rzigmSLkTZWuCC1HxekecUFyRYjbaxwQWo/LkjziguSLUbaWOGC1H5ckOYVFyRbjLSxwgWp/bggzSsuSLYYaWOFC1L7cUGaV1yQbDHSxgoXpPbjgjSvuCDZYqSNFS5I7ccFaV5xQbLFSBsr5lKQviz/Kq+W18i/y3/JHLK0gvRz+ZSw+i2f5Rvkg/JDmUNckGwx0saKqRakr8s/yl8JC9Nlrw2nluvLS+S7MsUsoSB9WB4tl5bstYWzy4HydplqXJBsMdLGiikVpI/Kg+R8kr2WIS4mB8tnZCqZY0HiLOhwuY38sWSvp88J5TryIvm2TCUuSLYYaWNFywXpKHmt3Fz2k2z/d+JMcns5TH4qrWYuBekL8jS5hmT7v1MXlYfIEdJyXJBsMdLGitYK0pFyiFxRsv3dTVeVZ8jXpKVMuSC9S+4jXGrL9nm3nEpuKW+U1u49uSDZYqSNFS0UJA5ad5PTS7aPYziX3FfeI2NnSgXp+/IKuZFwSS3bzzFcQZ4iX5Kx44Jki5E2VoxZkDjYt1SEVjmPjHkgm0pBeoxk+9UaiuWYcUGyxUgbK8YqSPR4y/anVaeV38gYmUJB4qwo26dW/Y2MFRckW4y0sWKsgjT0INuSsboaT6EgXVmyfWrVCWSsuCDZYqSNFWMVpKdKtj8te5OMkUMl25/SmAXpkpLtU8vG6uywqYLE5e4/lD+SUwo9UU+z58/s8aVTCGf+2Tbwc/jZ2bZV9pELy5/JBfa0DcVrOYPwd9IphTGE7ENtH7t4PbXXzvt1uqItw99fexxfZtjO35dtX4XHn7Fo6xN/F3h//kB4b7LHrsJ7ynN5HzlGZI9Zhb9r3X8DvyNtrBirID1Rsv1pGT22xsgUCtJlJNunlv23jJFNFCQ63NRyV8me1/VNITeUctsrJcLA8nJ75plS5kfydKFQZc8Jt5Va7i3Z87riPu8dpNzGIPrIHaXcHm4tEZ6TPYZB+ZF9JXtMiU5SkYMke0zm3ZLlx0Jv5Ow5XQdIN7+U7HEZ7p1H6HSWPaZX2lgxVkF6smT70zKmsBkjUyhIl5Jsn1o21tizTRQkzj4+KeR7wmXd58rHaFCG/JuhRyT5tZSzncTAcX5e37f648nnJcKUT4w3617i7jtb4uAXr4f7y7weChwzeBBmWsme19UtFJwVdLd9QAhFi+LQ3dZ1DmEAPqH3b7mdnxtZ57YDs5BEeG+zx2Qo1D8T8nHhuMmA8siDJXteYKwlU6oRPudHSfa4DAUv8jnJHtMrbazwGdJwYxWk50m2PyUXpPXwbXGMbOqS3fWEvEqi7azyDrlup22Vb0iE53S3xQF8yKVYigX5qpxTuts4+NPlvtu2CvchCb9n0cZlNg7A2Vlcqft66MHb3RbHuSHjG68phOeU26IgceZXbquJs9FP7/lzncuZcbZ6U4m2W9CgMF9n97EZLvcRPtNs+yp8MfiFMK8kuaBkj6tKGytckIbjm98Yealk+1PiPsJY4Z5Btk8tY/qiMbKpgnQDIRywsu19OKgSvjmTO0ls+wQNSt/nyjfwyP6SPWaoawvpFqR1xID2uBTLgOzYFpe+riXd52RiP/h9L7dx6ZFwyazctgrzMxLOWpl1hjxessdm4lYBZ0vRxv0gwpRZ3cdmzi2ECYqz7Rm+RBDOuqP4DblE+P+kjRVjFaQnSbY/LTub8C2O+yWXFX5ZdxN/z5/LOmO12C+eF/sY+7mp/b3cnj+7P+/yku3LbuCA8gJhSqm98TrhjGLMyVk3VZBiPBXF42rCN/sbC50BsseXuNR3tNxFInEzP74V8++vfF4Xfx9Z99t3hveFcPmPz5n/5yyQjhrZ40uchfB6KKwRLgWy7Z3H/t9vZ2Mpn1eK/eB95UyGTho4v9xKCJfRsudmuLRHuBfHYHHyA8kem/lnId0zpIfSoLxfuo/NcBmSfEiy7ZmXCWHy6tjnvRqqkzZWuCDZVPANcw7ZVEHiAJVl6E3zbwnhgM+9BRKXuv7j2P/rL0hx8F91Fn8zYQkR7n3QYyx7TODgl+Vhkj2+FPeQ6InGjPAk7tdEQaJwl88rrdqPbn4i2XNLvycUye4lPubOJFeR7mNXiVsFFFwKf5y9EuZvzJ7TFQWJOR6z7aXjCukW3fgCxxfQ7mN7pY0VLkg2BfFNfA7ZVEG6iRDOZrgUxCUdzna4j5Q9vsS3dBIdAP7z2P875pg7SxwE+85+4xIUB/xsO/c/I1eS7DEhzkzYj78VLhWxL38i2eNLsf9cRuT/o5MEl+7iPsyQ9z72g0uAPPdee/6kpxmdNcjQS3bxpYGJhbkPRq+3GD7C2Xr2nNJbhDAwvzs4n886e3yJ+3qEDiLZ9lL0NKQDCL93fMaxz/8k2XNWShsrXJBsClqYU3BT2VRB4gBH9vYeUvSyi44I3LSOxNlG3xnSeSXCWJfsMZw9kb4OBX8h5PWSbe8TnRqiIHOJPRKLdXL2Uz6vFAXpzVJuO7EQ7j+W2zJ99537usODwkWi6/vDj/2/3xa58rGZ6L499AyJxU1XhYK41hyVaWOFC5JNAd1O5xLui2SvcV1x1lh+a/07GTJuJM4oumdUcbCLDOkhF12zPyInkXJ7dCjoK0hRCPg23m3nGzvjrrptGVaNJmeRaLsnDZ1cXbrPyXD/imRnfdGZYMg9oHgsYWwUlwv/WugBGfvKJc3suV3ZPaTowNHt6LAK96DJ+yTb3sX9xwj/jrgvSScP0IuSDNnn/5U2Vrgg2RRMaUHFvgztBt0nbrBTWPj2fHd5AA17kj0n3E8i5SW+GMtEhnQC6J6JcK+E320KIgNiu13r+153FCR6jt1DuA/U3c+TS/Y88Noj5SW+uH9EOAvrbstEQeLYWG6LLtRD7iFF77iyCzr4vAhnbn3jvDhjJFzCjLaYi5GxdLUu8ZzRPUcInw2X37LHhbg0l+3zPwjh3xs9esvtqbSxwgXJpuCzMpfsaCqWDlbLXRUOGtlzQjflgZ4CFem77xMoSt3BsRG+SMQxpu/shB6cq0JX7uw54VcSKS8d0mkjurYPmXWCsxjCpatyG6sbk76C1H0POZMttzMQOQa8co+q3N4Vhe120m2PAbz8bnTbu1gTrEz2OMSZFMnep+4ZHys9l9tTaWOFC5JNwVwKEqPms9e3ty4kXAq7uNDVnz85q+krevTO4v7QqoUTOaAO6ZFWuohweYob7oy/ifYh43/A82PYAq+Fn8HrO7Nkjw+8D/RaW/V6OLPh7Oj4nbZV6A3IqsblIN9AkR7Su419p7t4tg3sE+9L3z5xxsels5N22gJnnX9atJX4nHk/+fNie9pW4efxGWTbQNFa699F2ljhgmRTMJeCxFiW7PWZzVLaWOGCZFMwh4K01xNUmk1V2ljhgmRTMPWC1O0hZbYYaWOFC5JNwRQL0pFCz6Ts2r/ZIqSNFS5INgVTLEjMoM2cf9nrseV5hjCeLjoNMGh2VSeM2UgbK1yQbAqmfMmOg9CqHlu2DDGe6nHCnHQx0/zg8TxTlTZWuCDZFMyhU8PaE1PabDDBaawnxJ9MGLvuEuiTlDZWuCDZFMyhIDFrQbky604xgJGZuVlKglH/2dQ96zpYeL+ZDfyLwlIH2eNWYbwLgzkZKMsUOyxKx2zfQ5fFYPl1Zotg/Z4hCwQGfj7P4bms0Jo95uXC+5XNU5dhjBCvn2mRviO8Jxwzh0zZ08WaRE+Vr+zBeLRHSjlLxiosNcKZNs97rzBdE8tJMB0QM4BfQrLndbGUBq+b18C8f7yOvnFJO5Y2Vrgg2RTMoSCRIUtxD9Udhc/MDKxhkz1uHd3JQGOhO/JiyR5f6s7uTWIRQMJsCiwqmD2v64ESoZBlj8nEtD6E4l9uZ467yJAluVnt9ocSYZoeVlCNMMdc9rwSi5F20/0ZhGmAsud1ddesIvwMZouIPFay5wUGGUd4XnfW8KGzqe+VtLHCBcmmYC4Fiaw1W3JFzIDO/Yls+7qYVYAcJbGwXax2ytlB+fgSB8UIY67ikhTTClHQIrXZC0IcxFed6axChwHCayi3RUHibPJ4Um7v4swoDvisBRTvB+sbMTlqhOl0yud2cbYX4cwzFhtkiYxnS2TI2kgxX193Rd34UtJdHTdDBxvCulfRxkKVhJ/RfexGpY0VLkg2BXOaXHVTK+zGQm3l7A9cGhpyJlJiShjCOkLddqat6estyJpKkVVjrl4thEtO2fauOEtaZ6lvxGzV2XpFTD9EuGRVbivR+YCU70V4pnCWVbsPRPGKOfQoTNljOA4SLuNl27ti7alXSLd9yHRIsQIwE/JGG8MRmLB1U1+QUmljhQuSTcGczpCYFDV7jetizjjC/Q3uITCpaFza4QDXN/9biQNTTPjJ/Ym+5SK64kygtpR5FARSm7kbnE2Qx0i2fZUhBYkzpHJbifteZCdrV8XKsywVkW0Hs3FH0WJtqewxgQlNSbk8xxAPkQhLjLCqbva4jUsbK1yQbArmVJBYWyZ7jXuj7305n2TPW4VJOLszZ3MWNmQyTc7KSN8ZTSyU13cznY4EpO/eSIlJZUk2G3cUJLpdl9tKsWxG38SlNfcX0reAYiz30XfZjvWJIhSx+JyGrk8UZ6iE57MsRd+lyx1LGytckGwKYpGyOWRTBYlLN4SVX58lnE3E+0SHBC478Q08e24Nz+FndcNS4tljQ1x6epFk2wNnJ4QeX9n2EAXpEMm2rxIdG2r3kFhvqdxWig4d+0u2fYjsnk8mllrvWy+KZd0JY5joTUhvQXoyDlmzKlxZOPuNDLlUuCNpY4ULkk0Bv0hzySYKEgdKQi+w7uWXWFI8W2BtXftKFD1S+zYdy6l/SbLt6Pb06rvvEZfs1u3UEGv28L6U26IgDTlD4oBPdtJhhAJDams5dRc35D5c9pgQi/KVKwTvDf4NRg/CB0v2mI1IGytckGwq6Ek0h2yiILG2DykXkYuOCfQM67YPFb3AurgfQ2rdgylWcf+JVWuzx0SvQMYCZdu7GDhKyntIXELrm90g7snQk63bHj3SGMPTbc+wYi3hbKS7JHrXkIHOsdT4qu7rbxHyb5Jt74qC9FLptlPIyteaOVXx/3G/8bXSbd+otLHCBWm4Rwg3O2NwGr9g/MngNP6bf1TvFrpYljhAMMbjMGFwGjcmSyxVzD+O18lr9vz34TJ4dUbhHys/hy6dXL7pKv8+fhn4+W+TVfvMtncJBz5eJ6+3i9fMJYdtTY3DN8qDhEs5XJJ6wh78e+riANBFN2I8RZ4mHBTHyk5ulIfu6p33FNoYZPlxGhQO6OVz+nCwJwxqZSAnvcQYAEo4MGfP6Yol1cmhwr+JkwmdI+I+CfdmhsxQEDfhGbfFgnn7CCvOkr4DKL8/hJ5l3Kvi+QcIl/EIxSZ7XunLQjjDoecgB3QWqGMFWAYMk9pidojl0AlnNvSIZPAy3en5nYoMuVcVBYnfSy6r8p7wPHoNMt4re06If+/cb+J5LJvOcYzw+5Q9ZyPSxoqxChIHh2x/WsY/hDHSd1M08Is+Vlh+OtunlnUHFm4zmyhIKAdLRjiQ7s3NajpAcD8qy9CD+H1lVejQMLSTBT3BVuX9kj0nMBtGdJ4ow/Eue06GYhr3d7LwpXHIPTqKwKpQ7C4l2fNK3U4NZRjomj0n8CUsy1dlVzs2pI0VLkjDceYxRhj9nu1PiV+gsTJk6pLWMPJ+jGyqIIEvApwNc+DkLJ2z+Oxx6zhQ+PZMDz5uyLOcd/a4VTiL4FIb+8NZCmfht5fssatwJsy/+xcIZ1v8+XzhCsDQ7uj0cuOKBe8N+3BryR7Xh/E/XDEg7xTOuPs6IJS4z0eR5WoDHRG4UkKR5yw0e3yGS5UMpuX9iPfkucIMHUPeXwYkM0CZs1U6RHCfbsgYph1JGyt8yW44fjnHCP/4sv0pjVmQhn7La8kcCpJtB5fZuDR2x06bDZA2VrggDeeCtDrrTILZChckG4qCxP1HsohZujclbawYqyBxTTPbn5aNVZBeKNn+lMYsSFNciM4FyYaihyczl3OJLNtuK6SNFWMVpHUHvLWAnmljZAoFaWqdGo4rMUhz23FBssVIGyvGKkh9o5dbdISMkSkUpFUTaraKnlhjxQXJFiNtrBirIJG++axawoSYY2UKBWnI+jItYR6vseKCZIuRNlaMWZAYJHcnYRr0bN9awAzKMUniWJlCQSJMxDlkXZcxMYdadzqcMeKCZIuRNlaMWZAiRwsT/jFieCez624K/fUfJGNdoiszlYIU4eYvo/2ZqqWcrmQMTLPD+I1VgyW3HRckW4y0saKFglTmSOEAwlQhuz49ujDamoMWg8bGutFdy9QKUhkKOxM4busSLcsMcObN1EjdpZpbiQuSLUbaWNFiQeqGiR35ts3U60MmEByKiSLvLUwH1F3/pcVMvSB1w+BC5tVigtG9WRphFQbmMrddzOXWclyQbDHSxorWC1IZpiJhXfi9+bbN7LxMxBmTJk4lcypIZfhCwFQ1665uSi85evYxlQwTS04pLki2GGljxdQKUjdcXmMeJ2bDPpewfDEz+3KZj2n0mbH4dsLsv7Hg1hQz54LUDTOpM4MHc6cx5X+cQbG09n7CaqZM3tmdJXmKcUGyxUgbK6ZckLKwJssvfvufs8lSClIWlj1o8T7QTuKCZIuRNlbMrSDNMUsuSHOMC5ItRtpY4YLUflyQ5hUXJFuMtLHCBan9uCDNKy5IthhpY4ULUvtxQZpXXJBsMdLGChek9uOCNK+4INlipI0VLkjtxwVpXnFBssVIGytckNqPC9K84oJki5E2VrggtR8XpHnFBckWI22scEFqPy5I84oLki1G2ljhgtR+XJDmFRckW4y0scIFqf24IM0rLki2GGljhQtS+3FBmldckGwx0saKt4rTdoYWJJaCd9qPC5ItRtpY4TOk9uMzpHnFBckWI22seJs4bedQyT67kgvSNHItyT4/s9lJGyveLE7beYFkn12JVVSd9nNVyT4/s9lJGysOEaft3Eeyzy7zTXHazjkl++zMZidtrODbmtN2ziHZZ5fhbMppN1+S7HMzm6W0scfHxGkz3OPLPrNVziBOu7mtZJ+b2SyljT3OJk57+ZmcXLLPrObu4rSXN0n2eZnNVto4wEXkJ+K0kW8LXxSyz2qI+4vTTt4g2edkNmtp40D7yvPFGTd0NMk+n3VdQt4jzng5Um4q2edjNntp45ooTNeRl8j3xdndfF3ojHA1yT6PnTqj3FmYleNocXY3n5JHyIUk+zzMFiNt3KFLycPlo+JsJh+Wg+Tckr3nu+VEcm15nlAInZ2HS91vlFvKfpK972aLlDZu0Gnk5sKAWm66O8PyQ3md3EAYwJq9t2O4oDxYjhBneL4oT5SrSPa+mpmkjbuIcUxPEcZXOL+bT8gj5XKSvXetObVwv+OV8iNx/i8/l3fIfeXMkr1/ZlZIG7eEXmFchnqvLDG/Fiar5X7N6SV7j6aES7WPky/IEvMt4T7q9WQfyd4jM6tIG0dwEjlAmBiUX+y55qvyHLmmHF+y92IOzip3krfLr2Su4dIl90v3l+x9MLM1pI0NuLAcLFzGmnrokMB9l3NJ9lrnjo4RLKHwXKFb85TDfVA6JNxMTivZ6zWzvZQ2NoZuyLeQw2QK9yq+Iy12SGjF+eUB8iGZQj4vTxXPum22y9LGxnFgeLK01DGCXlSPlctIts+Wo2BztvF6OUpayG+E+5r3krNLtt9mtgvSxgnhMtjfy7tkm+G+yOFyN5lDh4RW0MOQws5g0W2GZTiYdYQB3ieWbN/MbJeljRN1UmEQ58uEy2abTnRI4AztuJLtg20O3aUPFHoi0o160/mkMEMC9yuzv9/MtixtnImLyoOEe09fk3XzFWHGZc7AzifZ32HbcUJhKe9nywflu7JOKGicddEtmxkSTifZ32NmI0obZ+qUcl5hElEuDTFqnrOdcHlhJoLzyCkk+xnWDtZyooPEZeVKwmdIbz4KF/9/abmAcB9ozl3szWYjbTQzM9u2tNHMzGzb0kYzM7NtSxvNzMy2LW00MzPbtrTRzMxs29JGMzOz7TrmOP8D9LrpLEHx+oAAAAAASUVORK5CYII=" alt="C3 Engenharia" style="height:44px;object-fit:contain;">
+    </div>
+    <div class="contrato-tag">REGAP — PETROBRAS • U-0028</div>
+  </div>
+
+  <nav>
+    <div class="nav-section">Painel</div>
+    <div class="nav-item active" onclick="go('visao')">
+      <span class="ico">🏠</span> Visão Geral
+    </div>
+
+    <div class="nav-section">Spooletagem</div>
+    <div class="nav-item" onclick="go('mud21')">
+      <span class="ico">📐</span> Mudança 2.1
+    </div>
+    <div class="nav-item" onclick="go('mud41')">
+      <span class="ico">📐</span> Mudança 4.1
+    </div>
+    <div class="nav-item" onclick="go('spools')">
+      <span class="ico">📋</span> Lista de Spools
+    </div>
+
+  </nav>
+
+  <div class="sidebar-footer">
+    Phase-Out Diesel S-500 • 2026
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main id="main">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="topbar-title">Visão Geral</div>
+      <div class="topbar-sub" id="topbar-sub">Contrato CC101 · REGAP · RPBC</div>
+    </div>
+    <span class="badge">Phase-Out Diesel S-500</span>
+  </div>
+
+  <div class="content">
+
+    <!-- ===== NÍVEL 1: VISÃO GERAL ===== -->
+    <div class="screen active" id="screen-visao">
+
+      <div class="kpi-grid">
+        <div class="kpi">
+          <div class="kpi-label">Total de Spools</div>
+          <div class="kpi-val">285<span class="kpi-unit">spools</span></div>
+          <div class="kpi-sub">140 Mud.2.1 · 145 Mud.4.1</div>
+        </div>
+        <div class="kpi azul">
+          <div class="kpi-label">Comprimento Total</div>
+          <div class="kpi-val">1.371<span class="kpi-unit">m</span></div>
+          <div class="kpi-sub">692 m + 679 m</div>
+        </div>
+        <div class="kpi verde">
+          <div class="kpi-label">Peso Total Estimado</div>
+          <div class="kpi-val">37,8<span class="kpi-unit">t</span></div>
+          <div class="kpi-sub">API 5L B · SCH 40</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Diâm. Médio Pond.</div>
+          <div class="kpi-val">5,8<span class="kpi-unit">"</span></div>
+          <div class="kpi-sub">147,7 mm · DN150 predominante</div>
+        </div>
+        <div class="kpi azul">
+          <div class="kpi-label">Isométricos</div>
+          <div class="kpi-val">23<span class="kpi-unit">ISO</span></div>
+          <div class="kpi-sub">13 (P-6328) · 10 (P-6335)</div>
+        </div>
+      </div>
+
+      <div class="cards-row">
+        <div class="card">
+          <div class="card-title">📊 Spools por Mudança</div>
+          <div class="card-sub">Distribuição entre as linhas de tubulação</div>
+          <canvas id="chart-donut"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-title">⚖️ Peso por Mudança (kg)</div>
+          <div class="card-sub">Cálculo: tubo 6" SCH 40 = 28,26 kg/m</div>
+          <canvas id="chart-peso-mud"></canvas>
+        </div>
+      </div>
+
+      <div class="cards-row">
+        <div class="card">
+          <div class="card-title">📏 Comprimento por Isométrico</div>
+          <div class="card-sub">Metros de tubo 6" por folha</div>
+          <canvas id="chart-comp-iso"></canvas>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:0">
+        <div class="card-title">📈 Comparativo Mudança 2.1 vs 4.1</div>
+        <div class="card-sub">Spools · Comprimento · Peso · Isométricos</div>
+        <canvas id="chart-radar"></canvas>
+      </div>
+    </div>
+
+    <!-- ===== NÍVEL 2A: MUDANÇA 2.1 ===== -->
+    <div class="screen" id="screen-mud21">
+      <div class="mud-header">
+        <div>
+          <h2>Mudança 2.1 — P-6328</h2>
+          <p>Linha: 6"-0028-P-6328-Ba · ISO: REG-IS-0028-P-6328 · Revisão 2</p>
+        </div>
+        <span class="tag">140 Spools · 692 m · 18,6 t</span>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-label">Spools</div><div class="kpi-val">140</div><div class="kpi-sub">13 folhas de isométrico</div></div>
+        <div class="kpi azul"><div class="kpi-label">Comprimento</div><div class="kpi-val">692<span class="kpi-unit">m</span></div><div class="kpi-sub">Tubo 6" SCH 40 API 5L B</div></div>
+        <div class="kpi verde"><div class="kpi-label">Peso Estimado</div><div class="kpi-val">18.578<span class="kpi-unit">kg</span></div><div class="kpi-sub">≈ 18,6 toneladas</div></div>
+        <div class="kpi roxo"><div class="kpi-label">Revisão ISO</div><div class="kpi-val">REV. 2</div><div class="kpi-sub">Espoletamento TENAX Mar/26</div></div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-item"><div class="lbl">Isométrico</div><div class="val">REG-IS-0028-P-6328</div></div>
+        <div class="info-item"><div class="lbl">Linha</div><div class="val">6"-0028-P-6328-Ba</div></div>
+        <div class="info-item"><div class="lbl">Programa</div><div class="val">Phase-Out Diesel S-500</div></div>
+        <div class="info-item"><div class="lbl">Área</div><div class="val">U-0028</div></div>
+        <div class="info-item"><div class="lbl">Cliente</div><div class="val">REGAP — Petrobras</div></div>
+        <div class="info-item"><div class="lbl">Material</div><div class="val">API 5L B · SCH 40</div></div>
+        <div class="info-item"><div class="lbl">Diâmetro Principal</div><div class="val">6" (DN 150)</div></div>
+        <div class="info-item"><div class="lbl">Pressão de Projeto</div><div class="val">14,0 kgf/cm²</div></div>
+      </div>
+
+      <div class="cards-row">
+        <div class="card">
+          <div class="card-title">📄 Spools por Folha</div>
+          <div class="card-sub">Quantidade de spools em cada folha do isométrico</div>
+          <canvas id="chart-21-folha-n"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-title">⚖️ Peso por Folha (kg)</div>
+          <div class="card-sub">Estimativa de peso de tubo por folha</div>
+          <canvas id="chart-21-folha-peso"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📏 Comprimento Acumulado por Folha (m)</div>
+        <div class="card-sub">Progresso de comprimento ao longo das folhas</div>
+        <canvas id="chart-21-acum"></canvas>
+      </div>
+    </div>
+
+    <!-- ===== NÍVEL 2B: MUDANÇA 4.1 ===== -->
+    <div class="screen" id="screen-mud41">
+      <div class="mud-header" style="background:linear-gradient(135deg,#7C3D00 0%,#D97706 100%);">
+        <div>
+          <h2>Mudança 4.1 — P-6335</h2>
+          <p>Linha: 6"-0028-P-6335-Ba · ISO: REG-IS-0028-P-6335 · Revisão 1</p>
+        </div>
+        <span class="tag">145 Spools · 679 m · 19,2 t</span>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi laranja" style="--laranja:#D97706;"><div class="kpi-label">Spools</div><div class="kpi-val">145</div><div class="kpi-sub">10 folhas de isométrico</div></div>
+        <div class="kpi azul"><div class="kpi-label">Comprimento</div><div class="kpi-val">679<span class="kpi-unit">m</span></div><div class="kpi-sub">Tubo 6" SCH 40 API 5L B</div></div>
+        <div class="kpi verde"><div class="kpi-label">Peso Estimado</div><div class="kpi-val">19.181<span class="kpi-unit">kg</span></div><div class="kpi-sub">≈ 19,2 toneladas</div></div>
+        <div class="kpi roxo"><div class="kpi-label">Revisão ISO</div><div class="kpi-val">REV. 1</div><div class="kpi-sub">Espoletamento TENAX Abr/26</div></div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-item"><div class="lbl">Isométrico</div><div class="val">REG-IS-0028-P-6335</div></div>
+        <div class="info-item"><div class="lbl">Linha</div><div class="val">6"-0028-P-6335-Ba</div></div>
+        <div class="info-item"><div class="lbl">Programa</div><div class="val">Phase-Out Diesel S-500</div></div>
+        <div class="info-item"><div class="lbl">Área</div><div class="val">U-0028</div></div>
+        <div class="info-item"><div class="lbl">Cliente</div><div class="val">REGAP — Petrobras</div></div>
+        <div class="info-item"><div class="lbl">Material</div><div class="val">API 5L B · SCH 40</div></div>
+        <div class="info-item"><div class="lbl">Diâmetro Principal</div><div class="val">6" (DN 150)</div></div>
+        <div class="info-item"><div class="lbl">Pressão de Projeto</div><div class="val">14,0 kgf/cm²</div></div>
+      </div>
+
+      <div class="cards-row">
+        <div class="card">
+          <div class="card-title">📄 Spools por Folha</div>
+          <div class="card-sub">Quantidade de spools em cada folha do isométrico</div>
+          <canvas id="chart-41-folha-n"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-title">⚖️ Peso por Folha (kg)</div>
+          <div class="card-sub">Estimativa de peso de tubo por folha</div>
+          <canvas id="chart-41-folha-peso"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📏 Comprimento Acumulado por Folha (m)</div>
+        <div class="card-sub">Progresso de comprimento ao longo das folhas</div>
+        <canvas id="chart-41-acum"></canvas>
+      </div>
+    </div>
+
+    <!-- ===== NÍVEL 3: LISTA DE SPOOLS ===== -->
+    <div class="screen" id="screen-spools">
+      <div class="filtros">
+        <select id="filtro-mud" onchange="filtrarSpools()">
+          <option value="">Todas as Mudanças</option>
+          <option value="2.1">Mudança 2.1</option>
+          <option value="4.1">Mudança 4.1</option>
+        </select>
+        <select id="filtro-folha" onchange="filtrarSpools()">
+          <option value="">Todas as Folhas</option>
+        </select>
+        <input type="text" id="filtro-busca" placeholder="🔍 Buscar spool..." oninput="filtrarSpools()" style="min-width:180px">
+        <span id="filtro-count" style="font-size:12px;color:var(--cinza3);"></span>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Mudança</th>
+              <th>Spool</th>
+              <th>Folha</th>
+              <th>Comp. (m)</th>
+              <th>Peso (kg)</th>
+              <th>Juntas</th>
+              <th>Linha</th>
+            </tr>
+          </thead>
+          <tbody id="tbl-spools"></tbody>
+        </table>
+      </div>
+    </div>
+
+
+  </div><!-- /content -->
+</main>
+
+<script>
+// ===== DADOS =====
+const D = {
+  mud21:{
+    n:140, comp_m:692.0, peso_kg:18578.4,
+    folhas:[
+      {folha:"FL 01",n:15,comp:84.8,peso:2176.1},
+      {folha:"FL 02",n:5,comp:21.4,peso:551.2},
+      {folha:"FL 03",n:6,comp:30.5,peso:776.0},
+      {folha:"FL 04",n:5,comp:15.5,peso:437.7},
+      {folha:"FL 05",n:9,comp:33.9,peso:929.5},
+      {folha:"FL 06",n:11,comp:55.2,peso:1558.9},
+      {folha:"FL 07",n:21,comp:122.8,peso:3470.8},
+      {folha:"FL 08",n:11,comp:61.4,peso:1468.5},
+      {folha:"FL 09",n:9,comp:48.9,peso:1251.5},
+      {folha:"FL 10",n:15,comp:82.0,peso:2318.9},
+      {folha:"FL 11",n:11,comp:32.7,peso:851.1},
+      {folha:"FL 12",n:11,comp:51.7,peso:1344.1},
+      {folha:"FL 13",n:11,comp:51.1,peso:1444.1}
+    ]
+  },
+  mud41:{
+    n:145, comp_m:679.0, peso_kg:19181.0,
+    folhas:[
+      {folha:"FL 02",n:10,comp:47.0,peso:1328.0},
+      {folha:"FL 03",n:15,comp:70.5,peso:1992.0},
+      {folha:"FL 04",n:17,comp:62.9,peso:1778.2},
+      {folha:"FL 05",n:10,comp:55.0,peso:1554.0},
+      {folha:"FL 06",n:19,comp:95.0,peso:2684.7},
+      {folha:"FL 07",n:15,comp:82.5,peso:2331.0},
+      {folha:"FL 08",n:19,comp:98.8,peso:2793.0},
+      {folha:"FL 09",n:12,comp:39.6,peso:1119.6},
+      {folha:"FL 10",n:13,comp:49.4,peso:1396.2},
+      {folha:"FL 11",n:15,comp:78.0,peso:2205.0}
+    ]
+  }
+};
+
+// Gerar spools da lista
+const SPOOLS = [];
+// Mudança 2.1
+const linesM21 = [
+  [1,15,"1 de 15","6\"-0028-P-6328-Ba",84800/15],
+  [16,20,"2 de 15","6\"-0028-P-6328-Ba",21400/5],
+  [21,26,"3 de 15","6\"-0028-P-6328-Ba",30500/6],
+  [27,31,"4 de 15","6\"-0028-P-6328-Ba",15500/5],
+  [32,40,"5 de 15","6\"-0028-P-6328-Ba",33900/9],
+  [41,51,"6 de 15","6\"-0028-P-6328-Ba",55200/11],
+  [52,72,"7 de 15","6\"-0028-P-6328-Ba",122800/21],
+  [73,83,"8 de 15","6\"-0028-P-6328-Ba",61400/11],
+  [84,92,"9 de 15","6\"-0028-P-6328-Ba",48900/9],
+  [93,107,"10 de 15","6\"-0028-P-6328-Ba",82000/15],
+  [108,118,"11 de 15","6\"-0028-P-6328-Ba",32700/11],
+  [119,129,"12 de 15","6\"-0028-P-6328-Ba",51700/11],
+  [130,140,"13 de 15","6\"-0028-P-6328-Ba",51100/11]
+];
+linesM21.forEach(([ini,fim,folha,linha,comp])=>{
+  for(let i=ini;i<=fim;i++){
+    const c=Math.round(comp);
+    SPOOLS.push({m:"2.1",sp:`SP ${String(i).padStart(3,'0')}`,folha,linha,c,p:+(c*28.26/1000).toFixed(1),j:2});
+  }
+});
+
+// Mudança 4.1
+const linesM41 = [
+  [1,10,"2 de 14","6\"-0028-P-6335-Ba",47000/10],
+  [11,25,"3 de 14","6\"-0028-P-6335-Ba",70500/15],
+  [26,42,"4 de 14","6\"-0028-P-6335-Ba",62900/17],
+  [43,52,"5 de 14","6\"-0028-P-6335-Ba",55000/10],
+  [53,71,"6 de 14","6\"-0028-P-6335-Ba",95000/19],
+  [72,86,"7 de 14","6\"-0028-P-6335-Ba",82500/15],
+  [87,105,"8 de 14","6\"-0028-P-6335-Ba",98800/19],
+  [106,117,"9 de 14","6\"-0028-P-6335-Ba",39600/12],
+  [118,130,"10 de 14","6\"-0028-P-6335-Ba",49400/13],
+  [131,145,"11 de 14","6\"-0028-P-6335-Ba",78000/15]
+];
+linesM41.forEach(([ini,fim,folha,linha,comp])=>{
+  for(let i=ini;i<=fim;i++){
+    const c=Math.round(comp);
+    SPOOLS.push({m:"4.1",sp:`SP ${String(i).padStart(3,'0')}`,folha,linha,c,p:+(c*28.26/1000).toFixed(1),j:2});
+  }
+});
+
+// Popula select de folhas
+const selFolha = document.getElementById('filtro-folha');
+const todasFolhas = [...new Set(SPOOLS.map(s=>s.folha))].sort();
+todasFolhas.forEach(f=>{
+  const o=document.createElement('option');o.value=f;o.textContent=f;selFolha.appendChild(o);
+});
+
+// ===== CORES =====
+const COR_AZUL  = '#1B3A6B';
+const COR_AZUL2 = '#2E6DA4';
+const COR_LAR   = '#F47920';
+const COR_LAR2  = '#FF9A45';
+const COR_VERDE = '#22C55E';
+const COR_ROX   = '#8B5CF6';
+const PALETA = ['#1B3A6B','#F47920','#22C55E','#8B5CF6','#06B6D4','#EF4444','#84CC16','#F59E0B','#EC4899','#14B8A6','#6366F1','#D97706'];
+
+// ===== NAVEGAÇÃO =====
+let currentScreen = 'visao';
+const titles = {
+  visao:  ['Visão Geral','Contrato CC101 · REGAP · RPBC'],
+  mud21:  ['Mudança 2.1 — P-6328','Linha 6"-0028-P-6328-Ba · 140 Spools'],
+  mud41:  ['Mudança 4.1 — P-6335','Linha 6"-0028-P-6335-Ba · 145 Spools'],
+  spools: ['Lista de Spools','285 spools · Mudanças 2.1 e 4.1'],
+  efetivo:['Efetivo Geral','794 profissionais · Contrato CC101']
+};
+
+function go(screen){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item,.nav-sub').forEach(el=>el.classList.remove('active'));
+  document.getElementById('screen-'+screen).classList.add('active');
+  const map={visao:0,mud21:1,mud41:2,spools:3};
+  document.querySelectorAll('.nav-item')[map[screen]]?.classList.add('active');
+  document.getElementById('topbar-title').textContent = titles[screen][0];
+  document.getElementById('topbar-sub').textContent   = titles[screen][1];
+  if(screen==='spools') filtrarSpools();
+  currentScreen = screen;
+}
+
+// ===== TABELA SPOOLS =====
+function filtrarSpools(){
+  const mud   = document.getElementById('filtro-mud').value;
+  const folha = document.getElementById('filtro-folha').value;
+  const busca = document.getElementById('filtro-busca').value.toLowerCase();
+  const filt  = SPOOLS.filter(s=>
+    (!mud   || s.m===mud) &&
+    (!folha || s.folha===folha) &&
+    (!busca || s.sp.toLowerCase().includes(busca) || s.folha.toLowerCase().includes(busca))
+  );
+  document.getElementById('filtro-count').textContent = `${filt.length} spools`;
+  const tbody = document.getElementById('tbl-spools');
+  tbody.innerHTML = filt.map(s=>`
+    <tr>
+      <td><span class="badge-m ${s.m==='2.1'?'m21':'m41'}">${s.m}</span></td>
+      <td><b>${s.sp}</b></td>
+      <td>${s.folha}</td>
+      <td>${(s.c/1000).toFixed(2)}</td>
+      <td>${s.p}</td>
+      <td>${s.j}</td>
+      <td style="font-size:11px;color:var(--cinza3)">${s.linha}</td>
+    </tr>`).join('');
+}
+
+
+// ===== CHARTS =====
+const opts = (title)=>({
+  responsive:true,
+  plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label||''} ${ctx.formattedValue}`}}},
+  scales:{y:{beginAtZero:true,grid:{color:'#E2E8F0'},ticks:{color:'#64748B',font:{size:11}}},
+          x:{grid:{display:false},ticks:{color:'#64748B',font:{size:11}}}}
+});
+
+// Donut spools
+new Chart(document.getElementById('chart-donut'),{
+  type:'doughnut',
+  data:{
+    labels:['Mudança 2.1','Mudança 4.1'],
+    datasets:[{data:[140,145],backgroundColor:[COR_AZUL,COR_LAR],borderWidth:0,hoverOffset:8}]
+  },
+  options:{responsive:true,cutout:'65%',
+    plugins:{legend:{position:'bottom',labels:{padding:16,font:{size:12}}},
+             tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.raw} spools (${(ctx.raw/285*100).toFixed(1)}%)`}}}}
+});
+
+// Peso por mudança
+new Chart(document.getElementById('chart-peso-mud'),{
+  type:'bar',
+  data:{
+    labels:['Mudança 2.1','Mudança 4.1'],
+    datasets:[{label:'Peso (kg)',data:[18578,19181],backgroundColor:[COR_AZUL,COR_LAR],borderRadius:8,borderSkipped:false}]
+  },
+  options:{...opts(),plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{callback:v=>`${(v/1000).toFixed(0)}t`}}}}
+});
+
+// Comprimento por isométrico (todas folhas)
+const folhas21 = D.mud21.folhas;
+const folhas41 = D.mud41.folhas;
+const allFolhas = [...folhas21.map(f=>({...f,mud:'2.1'})),...folhas41.map(f=>({...f,mud:'4.1'}))];
+new Chart(document.getElementById('chart-comp-iso'),{
+  type:'bar',
+  data:{
+    labels:allFolhas.map(f=>`P-${f.mud==='2.1'?'6328':'6335'} ${f.folha}`),
+    datasets:[{
+      label:'Comprimento (m)',
+      data:allFolhas.map(f=>f.comp),
+      backgroundColor:allFolhas.map(f=>f.mud==='2.1'?COR_AZUL:COR_LAR),
+      borderRadius:4
+    }]
+  },
+  options:{...opts(),plugins:{legend:{display:false}},
+    scales:{x:{ticks:{font:{size:9},maxRotation:45}},y:{ticks:{callback:v=>v+'m'}}}}
+});
+
+
+// Radar comparativo
+new Chart(document.getElementById('chart-radar'),{
+  type:'radar',
+  data:{
+    labels:['Spools','Comprimento (×10m)','Peso (×500kg)','Folhas ISO','Revisão'],
+    datasets:[
+      {label:'Mudança 2.1',data:[140,69.2,37.2,13,2],backgroundColor:'rgba(27,58,107,.15)',borderColor:COR_AZUL,pointBackgroundColor:COR_AZUL,borderWidth:2},
+      {label:'Mudança 4.1',data:[145,67.9,38.4,10,1],backgroundColor:'rgba(244,121,32,.15)',borderColor:COR_LAR,pointBackgroundColor:COR_LAR,borderWidth:2}
+    ]
+  },
+  options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:12}}}},
+    scales:{r:{beginAtZero:true,ticks:{display:false},grid:{color:'#E2E8F0'},pointLabels:{font:{size:11}}}}}
+});
+
+// ===== MUD 2.1 charts =====
+new Chart(document.getElementById('chart-21-folha-n'),{
+  type:'bar',
+  data:{labels:D.mud21.folhas.map(f=>f.folha),
+    datasets:[{label:'Spools',data:D.mud21.folhas.map(f=>f.n),backgroundColor:COR_AZUL,borderRadius:6}]
+  },
+  options:{...opts(),plugins:{legend:{display:false}}}
+});
+new Chart(document.getElementById('chart-21-folha-peso'),{
+  type:'bar',
+  data:{labels:D.mud21.folhas.map(f=>f.folha),
+    datasets:[{label:'Peso (kg)',data:D.mud21.folhas.map(f=>f.peso),backgroundColor:COR_LAR,borderRadius:6}]
+  },
+  options:{...opts(),plugins:{legend:{display:false}},
+    scales:{y:{ticks:{callback:v=>`${(v/1000).toFixed(1)}t`}}}}
+});
+// Acumulado 2.1
+const acum21=[];let sum21=0;D.mud21.folhas.forEach(f=>{sum21+=f.comp;acum21.push(+sum21.toFixed(1));});
+new Chart(document.getElementById('chart-21-acum'),{
+  type:'line',
+  data:{labels:D.mud21.folhas.map(f=>f.folha),
+    datasets:[
+      {label:'Acumulado (m)',data:acum21,borderColor:COR_AZUL,backgroundColor:'rgba(27,58,107,.1)',fill:true,tension:.4,pointRadius:5,pointBackgroundColor:COR_AZUL},
+      {label:'Por Folha (m)',data:D.mud21.folhas.map(f=>f.comp),borderColor:COR_LAR,backgroundColor:'transparent',tension:.4,pointRadius:4,pointBackgroundColor:COR_LAR,borderDash:[5,4]}
+    ]
+  },
+  options:{responsive:true,plugins:{legend:{position:'bottom'}},
+    scales:{y:{beginAtZero:true,ticks:{callback:v=>v+'m'}},x:{grid:{display:false}}}}
+});
+
+// ===== MUD 4.1 charts =====
+new Chart(document.getElementById('chart-41-folha-n'),{
+  type:'bar',
+  data:{labels:D.mud41.folhas.map(f=>f.folha),
+    datasets:[{label:'Spools',data:D.mud41.folhas.map(f=>f.n),backgroundColor:COR_LAR,borderRadius:6}]
+  },
+  options:{...opts(),plugins:{legend:{display:false}}}
+});
+new Chart(document.getElementById('chart-41-folha-peso'),{
+  type:'bar',
+  data:{labels:D.mud41.folhas.map(f=>f.folha),
+    datasets:[{label:'Peso (kg)',data:D.mud41.folhas.map(f=>f.peso),backgroundColor:COR_AZUL,borderRadius:6}]
+  },
+  options:{...opts(),plugins:{legend:{display:false}},
+    scales:{y:{ticks:{callback:v=>`${(v/1000).toFixed(1)}t`}}}}
+});
+const acum41=[];let sum41=0;D.mud41.folhas.forEach(f=>{sum41+=f.comp;acum41.push(+sum41.toFixed(1));});
+new Chart(document.getElementById('chart-41-acum'),{
+  type:'line',
+  data:{labels:D.mud41.folhas.map(f=>f.folha),
+    datasets:[
+      {label:'Acumulado (m)',data:acum41,borderColor:COR_LAR,backgroundColor:'rgba(244,121,32,.1)',fill:true,tension:.4,pointRadius:5,pointBackgroundColor:COR_LAR},
+      {label:'Por Folha (m)',data:D.mud41.folhas.map(f=>f.comp),borderColor:COR_AZUL,backgroundColor:'transparent',tension:.4,pointRadius:4,pointBackgroundColor:COR_AZUL,borderDash:[5,4]}
+    ]
+  },
+  options:{responsive:true,plugins:{legend:{position:'bottom'}},
+    scales:{y:{beginAtZero:true,ticks:{callback:v=>v+'m'}},x:{grid:{display:false}}}}
+});
+
+
+</script>
+</body>
+</html>
