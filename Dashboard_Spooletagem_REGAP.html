@@ -198,6 +198,37 @@ tbody tr:nth-child(even):hover{background:var(--azul-claro);}
   background:rgba(244,121,32,.3);border:1px solid var(--laranja);
   color:#fff;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;
 }
+
+/* ===== LISTA DE MATERIAIS — seletores ===== */
+.mud-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px;}
+.mud-card{
+  background:var(--branco);border:2px solid var(--cinza2);border-radius:12px;
+  padding:18px 20px;cursor:pointer;transition:.2s;user-select:none;
+  display:flex;flex-direction:column;gap:6px;
+}
+.mud-card:hover{border-color:var(--azul3);background:var(--azul-claro);}
+.mud-card.active{border-color:var(--azul);background:var(--azul);color:#fff;}
+.mud-card.active .mud-card-label{color:rgba(255,255,255,.7);}
+.mud-card.active .mud-card-val{color:#fff;}
+.mud-card.active .mud-card-sub{color:rgba(255,255,255,.6);}
+.mud-card.ativa-laranja.active{border-color:var(--laranja);background:var(--laranja);}
+.mud-card-label{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--cinza3);font-weight:600;}
+.mud-card-val{font-size:22px;font-weight:800;color:var(--azul);}
+.mud-card-sub{font-size:11px;color:var(--cinza3);}
+
+.folhas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-bottom:24px;}
+.folha-card{
+  background:var(--branco);border:1.5px solid var(--cinza2);border-radius:10px;
+  padding:14px 16px;cursor:pointer;transition:.2s;user-select:none;
+}
+.folha-card:hover{border-color:var(--azul3);box-shadow:0 2px 8px rgba(27,58,107,.12);}
+.folha-card.active{border-color:var(--laranja);box-shadow:0 0 0 2px rgba(244,121,32,.25);}
+.folha-card .fc-iso{font-size:10px;color:var(--cinza3);margin-bottom:4px;}
+.folha-card .fc-folha{font-size:13px;font-weight:700;color:var(--azul);margin-bottom:8px;}
+.folha-card .fc-stats{display:flex;gap:10px;font-size:11px;color:var(--cinza3);}
+.folha-card .fc-stats span{display:flex;flex-direction:column;align-items:center;gap:1px;}
+.folha-card .fc-stats b{font-size:14px;font-weight:700;color:var(--texto);}
+
 </style>
 </head>
 <body>
@@ -505,59 +536,85 @@ tbody tr:nth-child(even):hover{background:var(--azul-claro);}
 
 <!-- ===== SCREEN MATLIST ===== -->
 <div class="screen" id="screen-matlist">
-  <h2 style="font-size:15px;color:var(--azul);margin-bottom:16px;font-weight:700;">Lista de Materiais por Desenho</h2>
-  <div class="filtros" style="margin-bottom:20px;">
-    <select id="mat-mud" onchange="filtrarMatList()">
-      <option value="">Todas as Muda&ccedil;as</option>
-      <option value="2.1">Muda&ccedil;a 2.1</option>
-      <option value="4.1">Muda&ccedil;a 4.1</option>
-    </select>
-    <select id="mat-folha" onchange="filtrarMatList()">
-      <option value="">Selecione a Folha</option>
-    </select>
-    <button class="btn btn-primary" onclick="document.getElementById('mat-mud').value='';document.getElementById('mat-folha').value='';filtrarMatList();">Limpar</button>
+
+  <!-- Nível 1: cards de seleção de mudança -->
+  <div class="mud-cards">
+    <div class="mud-card active" id="mc-all" onclick="matSelecionarMud('')">
+      <div class="mud-card-label">Todas as Mudanças</div>
+      <div class="mud-card-val">23</div>
+      <div class="mud-card-sub">folhas · 285 spools</div>
+    </div>
+    <div class="mud-card" id="mc-21" onclick="matSelecionarMud('2.1')">
+      <div class="mud-card-label">Mudança 2.1 — P-6328</div>
+      <div class="mud-card-val">13</div>
+      <div class="mud-card-sub">folhas · 140 spools</div>
+    </div>
+    <div class="mud-card ativa-laranja" id="mc-41" onclick="matSelecionarMud('4.1')">
+      <div class="mud-card-label">Mudança 4.1 — P-6335</div>
+      <div class="mud-card-val">10</div>
+      <div class="mud-card-sub">folhas · 145 spools</div>
+    </div>
   </div>
-  <div id="mat-resumo" style="display:none;margin-bottom:20px;">
-    <div class="kpi-grid">
+
+  <!-- Nível 2: grade de folhas/desenhos -->
+  <div style="font-size:12px;color:var(--cinza3);margin-bottom:10px;" id="mat-folhas-label">
+    Selecione um desenho para ver a lista de materiais
+  </div>
+  <div class="folhas-grid" id="mat-folhas-grid"></div>
+
+  <!-- Nível 3: lista de materiais da folha selecionada -->
+  <div id="mat-detalhe" style="display:none;">
+    <div class="kpi-grid" style="margin-bottom:20px;">
       <div class="kpi azul">
-        <div class="kpi-label">Isom&eacute;trico</div>
+        <div class="kpi-label">Isométrico</div>
         <div class="kpi-val" id="mat-iso" style="font-size:13px;font-weight:700;">--</div>
         <div class="kpi-sub" id="mat-folha-label">--</div>
       </div>
-      <div class="kpi"><div class="kpi-label">Spools</div><div class="kpi-val" id="mat-n-spools">--</div><div class="kpi-sub">nesta folha</div></div>
-      <div class="kpi"><div class="kpi-label">J &mdash; Pipe Shop</div><div class="kpi-val" id="mat-J">--</div><div class="kpi-sub">juntas pipe shop</div></div>
-      <div class="kpi verde"><div class="kpi-label">JC &mdash; Campo</div><div class="kpi-val" id="mat-JC">--</div><div class="kpi-sub">juntas de campo</div></div>
-      <div class="kpi roxo"><div class="kpi-label">Comprimento</div><div class="kpi-val" id="mat-comp">--</div><div class="kpi-sub">metros</div></div>
+      <div class="kpi">
+        <div class="kpi-label">Spools</div>
+        <div class="kpi-val" id="mat-n-spools">--</div>
+        <div class="kpi-sub">nesta folha</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">J — Pipe Shop</div>
+        <div class="kpi-val" id="mat-J">--</div>
+        <div class="kpi-sub">juntas pipe shop</div>
+      </div>
+      <div class="kpi verde">
+        <div class="kpi-label">JC — Campo</div>
+        <div class="kpi-val" id="mat-JC">--</div>
+        <div class="kpi-sub">juntas de campo</div>
+      </div>
+      <div class="kpi roxo">
+        <div class="kpi-label">Comprimento</div>
+        <div class="kpi-val" id="mat-comp">--</div>
+        <div class="kpi-sub">metros</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title" id="mat-card-title">Lista de Spools</div>
+      <div class="card-sub" id="mat-card-sub"></div>
+      <div class="tbl-wrap" style="margin-top:12px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Spool</th>
+              <th>Diâm.</th>
+              <th style="text-align:right;">Comp. (m)</th>
+              <th style="text-align:right;">J (Pipe Shop)</th>
+              <th style="text-align:right;">JC (Campo)</th>
+              <th style="text-align:right;">Total</th>
+              <th>Tipo predominante</th>
+            </tr>
+          </thead>
+          <tbody id="mat-tbody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
-  <div id="mat-placeholder" style="text-align:center;padding:60px 0;color:var(--cinza3);">
-    <div style="font-size:48px;margin-bottom:12px;">&#128210;</div>
-    <div style="font-size:15px;font-weight:600;">Selecione uma muda&ccedil;a e folha acima</div>
-    <div style="font-size:13px;margin-top:6px;">A lista de materiais do isom&eacute;trico ser&aacute; exibida aqui</div>
-  </div>
-  <div id="mat-tbl-wrap" style="display:none;" class="card">
-    <div class="card-title" id="mat-card-title">Lista de Spools</div>
-    <div class="card-sub" id="mat-card-sub">Juntas por spool</div>
-    <div class="tbl-wrap" style="margin-top:12px;">
-      <table>
-        <thead>
-          <tr>
-            <th>Spool</th><th>Di&acirc;m. (pol)</th>
-            <th style="text-align:right;">Comp. (m)</th>
-            <th style="text-align:right;">J (Pipe Shop)</th>
-            <th style="text-align:right;">JC (Campo)</th>
-            <th style="text-align:right;">Total</th>
-            <th>Tipo predominante</th>
-          </tr>
-        </thead>
-        <tbody id="mat-tbody"></tbody>
-      </table>
-    </div>
-  </div>
+
 </div>
 
-  </div><!-- /content -->
-</main>
 
 
 
@@ -680,7 +737,7 @@ function go(screen){
   document.getElementById('topbar-title').textContent = titles[screen][0];
   document.getElementById('topbar-sub').textContent   = titles[screen][1];
   if(screen==='spools') filtrarSpools();
-  if(screen==='matlist') filtrarMatList();
+  if(screen==='matlist'){ matRenderFolhas(); }
   currentScreen = screen;
 }
 
@@ -894,54 +951,84 @@ const FOLHAS = [{"mudanca": "2.1", "iso": "REG-IS-0028-P-6328", "folha": "1 de 1
 })();
 
 // ===== LISTA DE MATERIAIS =====
-function filtrarMatList(){
-  const selMud   = document.getElementById('mat-mud').value;
-  const folhasSel = document.getElementById('mat-folha');
-  const prevFolha = folhasSel.value;
-  folhasSel.innerHTML = '<option value="">Selecione a Folha</option>';
-  FOLHAS.filter(f=>!selMud||f.mudanca===selMud).forEach(f=>{
-    const opt = document.createElement('option');
-    opt.value = f.mudanca+'|'+f.folha;
-    opt.textContent = (selMud?'':f.mudanca+' · ')+f.folha+' ('+f.iso+')';
-    if(prevFolha===opt.value) opt.selected=true;
-    folhasSel.appendChild(opt);
-  });
 
-  const folhaKey = folhasSel.value;
-  const folhaObj = folhaKey ? FOLHAS.find(f=>f.mudanca+'|'+f.folha===folhaKey) : null;
+// ===== LISTA DE MATERIAIS =====
+let _matMud = '';       // mudança selecionada: '', '2.1', '4.1'
+let _matFolha = null;   // objeto FOLHAS selecionado
 
-  document.getElementById('mat-placeholder').style.display = folhaObj?'none':'block';
-  document.getElementById('mat-resumo').style.display      = folhaObj?'block':'none';
-  document.getElementById('mat-tbl-wrap').style.display    = folhaObj?'block':'none';
+function matSelecionarMud(mud){
+  _matMud = mud;
+  _matFolha = null;
+  document.getElementById('mat-detalhe').style.display = 'none';
+  // Destacar card ativo
+  ['mc-all','mc-21','mc-41'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  document.getElementById(mud===''?'mc-all':mud==='2.1'?'mc-21':'mc-41').classList.add('active');
+  // Renderizar grade de folhas
+  matRenderFolhas();
+}
 
-  if(!folhaObj) return;
+function matRenderFolhas(){
+  const grid = document.getElementById('mat-folhas-grid');
+  const label = document.getElementById('mat-folhas-label');
+  const lista = _matMud ? FOLHAS.filter(f=>f.mudanca===_matMud) : FOLHAS;
+  label.textContent = lista.length + ' desenho(s) disponível(is) — clique para ver a lista de materiais';
+  grid.innerHTML = lista.map(f=>{
+    const total = f.J + f.JC;
+    const cls = f.mudanca==='2.1'?'m21':'m41';
+    const isActive = _matFolha && _matFolha.mudanca===f.mudanca && _matFolha.folha===f.folha ? ' active' : '';
+    return `<div class="folha-card${isActive}" onclick="matAbrirFolha('${f.mudanca}','${f.folha.replace(/'/g,"\\'")}')">
+      <div class="fc-iso"><span class="badge-m ${cls}">${f.mudanca}</span> ${f.iso}</div>
+      <div class="fc-folha">Folha ${f.folha}</div>
+      <div class="fc-stats">
+        <span><b>${f.spools.length}</b>spools</span>
+        <span><b>${f.J.toLocaleString('pt-BR')}</b>J</span>
+        <span><b>${f.JC.toLocaleString('pt-BR')}</b>JC</span>
+        <span><b>${f.comp_m.toFixed(0)}m</b>comp</span>
+      </div>
+    </div>`;
+  }).join('');
+}
 
-  document.getElementById('mat-iso').textContent         = folhaObj.iso;
-  document.getElementById('mat-folha-label').textContent = 'Folha '+folhaObj.folha;
-  document.getElementById('mat-n-spools').textContent    = folhaObj.spools.length;
-  document.getElementById('mat-J').textContent           = folhaObj.J.toLocaleString('pt-BR');
-  document.getElementById('mat-JC').textContent          = folhaObj.JC.toLocaleString('pt-BR');
-  document.getElementById('mat-comp').textContent        = folhaObj.comp_m.toFixed(1).replace('.',',')+' m';
-  document.getElementById('mat-card-title').textContent  = 'Spools — '+folhaObj.iso+' / '+folhaObj.folha;
-  document.getElementById('mat-card-sub').textContent    = folhaObj.spools.length+' spools · J='+folhaObj.J.toLocaleString('pt-BR')+' · JC='+folhaObj.JC.toLocaleString('pt-BR');
+function matAbrirFolha(mudanca, folha){
+  _matFolha = FOLHAS.find(f=>f.mudanca===mudanca && f.folha===folha);
+  if(!_matFolha) return;
+  matRenderFolhas(); // re-render para marcar card ativo
+
+  const f = _matFolha;
+  document.getElementById('mat-iso').textContent        = f.iso;
+  document.getElementById('mat-folha-label').textContent= 'Folha ' + f.folha;
+  document.getElementById('mat-n-spools').textContent   = f.spools.length;
+  document.getElementById('mat-J').textContent          = f.J.toLocaleString('pt-BR');
+  document.getElementById('mat-JC').textContent         = f.JC.toLocaleString('pt-BR');
+  document.getElementById('mat-comp').textContent       = f.comp_m.toFixed(1).replace('.',',') + ' m';
+  document.getElementById('mat-card-title').textContent = 'Spools — ' + f.iso + ' / ' + f.folha;
+  document.getElementById('mat-card-sub').textContent   = f.spools.length + ' spools · J=' + f.J.toLocaleString('pt-BR') + ' · JC=' + f.JC.toLocaleString('pt-BR');
 
   let rows='';
-  folhaObj.spools.forEach(s=>{
-    const tot=s.J+s.JC;
-    const tipo = s.JC>=s.J ? '<span class="badge-m m41">Campo</span>' : '<span class="badge-m m21">Pipe Shop</span>';
-    const dn = s.diam==='3/4'?'3/4"':(s.diam==='6'?'6"':s.diam);
+  f.spools.forEach(s=>{
+    const tot = s.J + s.JC;
+    const tipo = s.JC >= s.J
+      ? '<span class="badge-m m41">Campo</span>'
+      : '<span class="badge-m m21">Pipe Shop</span>';
+    const dn   = s.diam==='3/4' ? '3/4"' : (s.diam==='6' ? '6"' : s.diam);
     const comp = s.comp_m ? s.comp_m.toFixed(3).replace('.',',') : '—';
-    rows+=`<tr>
+    rows += `<tr>
       <td style="font-weight:700;">${s.spool}</td>
       <td>${dn}</td>
       <td style="text-align:right;">${comp}</td>
-      <td style="text-align:right;">${s.J||'—'}</td>
-      <td style="text-align:right;">${s.JC||'—'}</td>
+      <td style="text-align:right;">${s.J || '—'}</td>
+      <td style="text-align:right;">${s.JC || '—'}</td>
       <td style="text-align:right;font-weight:700;">${tot}</td>
       <td>${tipo}</td>
     </tr>`;
   });
-  document.getElementById('mat-tbody').innerHTML=rows;
+  document.getElementById('mat-tbody').innerHTML = rows;
+  document.getElementById('mat-detalhe').style.display = 'block';
+  document.getElementById('mat-detalhe').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function filtrarMatList(){
+  matRenderFolhas();
 }
 
 </script>
